@@ -1,2 +1,4 @@
 bin/
 cfg/
+SFML/
+mongo-cxx-driver-r4.1.0/
