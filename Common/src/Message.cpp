@@ -7,7 +7,10 @@
 #include "Message.hpp"
 
 
-Message::Message(std::string content, std::string author, TimePoint date) :
+using namespace std::chrono;
+
+
+Message::Message(std::string content, std::string author, system_clock::time_point date) :
 	content(content), author_name(author), timestamp(date) {}
 
 
@@ -16,10 +19,10 @@ std::string Message::getContent() {
 }
 
 std::string Message::getAuthor() {
-	return autor_name;
+	return author_name;
 }
 
-TimePoint& getDate() {
+system_clock::time_point& Message::getDate() {
 	return timestamp;
 }
 

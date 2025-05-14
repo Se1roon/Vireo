@@ -15,13 +15,13 @@ class Message {
 	private:
 		std::string content;
 		std::string author_name;
-		TimePoint timestamp; // May need to think about storing dates more.
+		std::chrono::system_clock::time_point timestamp; // May need to think about storing dates more.
 
 	public:
-		Message(std::string content, std::string author, TimePoint date);
+		Message(std::string content, std::string author, std::chrono::system_clock::time_point date);
 
 		std::string getContent();
 		std::string getAuthor();
-		TimePoint& getDate();
+		std::chrono::system_clock::time_point& getDate();
 };
 
