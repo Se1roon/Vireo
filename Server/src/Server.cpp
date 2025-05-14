@@ -1,8 +1,6 @@
 /// @file Server.cpp
 /// @brief Implementation of the Server class.
 
-// TODO: Fix MongoDB issue
-
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -120,7 +118,9 @@ void Server::handle_requests() {
 						if (ldata) {
 							if (handle_login_request(*ldata, c->socket)){
 								c->username = ldata->username;
-								// Send response
+								sf::Packet response_packet;
+								response_packet << "S";
+								c->socket.send(response_packet);
 							}
 						}
 					}
