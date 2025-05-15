@@ -7,9 +7,6 @@
 
 #include <SFML/Network.hpp>
 
-#include <bsoncxx/builder/basic/document.hpp>
-#include <bsoncxx/types.hpp>
-#include <bsoncxx/json.hpp>
 #include <mongocxx/instance.hpp>
 #include <mongocxx/client.hpp>
 #include <mongocxx/uri.hpp>
@@ -17,18 +14,15 @@
 
 #include "Server.hpp"
 #include "ServerException.hpp"
+#include "DatabaseHandler.hpp"
 #include "User.hpp"
 #include "PacketManager.hpp"
-
-
-using bsoncxx::builder::basic::kvp;
-using bsoncxx::builder::basic::make_document;
 
 
 Server::Server(int listen_port, std::string db_connection_s)  {
 	this->listen_port = listen_port;
 	start_listener();
-	init_db_connection(db_connection_s);
+	db_handler = std::make_unique<DatabaseHandler>(db_connection_s);
 }
 
 
@@ -38,14 +32,6 @@ void Server::start_listener() {
 
 	listener.setBlocking(false);
 	selector.add(listener);
-}
-
-void Server::init_db_connection(std::string connection_string) {
-	mongocxx::options::client client_options;
-	mongocxx::options::tls tls_options;
-
-	mongocxx::uri uri(connection_string);
-	database_connection = std::make_unique<mongocxx::client>(uri);
 }
 
 
@@ -62,34 +48,27 @@ void Server::handle_new_client() {
 
 
 bool Server::handle_login_request(LoginData& ldata, sf::TcpSocket& client_s) {
-	auto db_users = (*database_connection)["Vireo"]["Users"];
-	auto user = db_users.find_one(make_document(kvp("username", ldata.username)));
+	auto user = db_handler->fetch_user(ldata.username);
+
 	if (user) {
-		auto user_view = user->view();
-		if (user_view["password"].get_string().value == ldata.password) {
+		if (user->getPassword() == ldata.password) {
 			std::cout << "Logged in!\n";
 			return true;
 		} else {
 			std::cout << "Incorrect password!\n";
 		}
-	}
+	} 
 
+	std::cout << "User doesn't exist\n";
 	return false;
 }
 
 bool Server::handle_register_request(RegisterData& rdata, sf::TcpSocket& client_s) {
 	// TODO: Implement check for already existing user
-	auto db_users = (*database_connection)["Vireo"]["Users"];
 
-	auto user_doc = user_to_document(rdata);
-	auto r = db_users.insert_one(user_doc.view());
+	User user(rdata.username, rdata.password, rdata.email);
 
-	if (r) {
-		std::cout << "Inserted [" << rdata.username << ":" << rdata.password << "] into the database.\n";
-		return true;
-	} else {
-		std::cout << "Something went wrong...\n";
-	}
+	db_handler->insert_user(user);
 
 	return false;
 }
@@ -116,10 +95,13 @@ void Server::handle_requests() {
 
 						auto ldata = packet_manager.extract_login_packet(packet);
 						if (ldata) {
+							sf::Packet response_packet;
 							if (handle_login_request(*ldata, c->socket)){
 								c->username = ldata->username;
-								sf::Packet response_packet;
 								response_packet << "S";
+								c->socket.send(response_packet);
+							} else {
+								response_packet << "F";
 								c->socket.send(response_packet);
 							}
 						}
@@ -148,22 +130,5 @@ void Server::handle_requests() {
 			}
 		}
 	}
-}
-
-
-bsoncxx::document::value Server::user_to_document(RegisterData& rdata) {
-	return bsoncxx::builder::basic::make_document(
-		kvp("username", rdata.username),
-		kvp("email", rdata.email),
-		kvp("password", rdata.password)
-	);
-}
-
-bsoncxx::document::value Server::user_to_document(User& user) {
-	return bsoncxx::builder::basic::make_document(
-		kvp("username", user.getUsername()),
-		kvp("email", user.getEmail()),
-		kvp("password", user.getPassword())
-	);
 }
 
