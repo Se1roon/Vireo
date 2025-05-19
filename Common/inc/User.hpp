@@ -34,6 +34,7 @@ class User {
 		void setPassword(std::string password);
 		void setEmail(std::string email);
 		
+		void setChats(std::vector<Chat> chats);
 		void joinChat(Chat& chat);
 		void leaveChat(Chat& chat);
 

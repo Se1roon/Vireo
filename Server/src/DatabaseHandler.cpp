@@ -43,6 +43,7 @@ std::optional<User> DatabaseHandler::fetch_user(std::string username) {
 
 		auto chats = user_view["chats"].get_array().value;
 		for (auto&& chat : chats) {
+			std::cout << "Execute?\n";
 			auto oid = chat.get_oid().value;
 			auto chat_doc = (*client)["Vireo"]["Chats"].find_one(make_document(kvp("_id", oid)));
 			if (chat_doc) {
@@ -71,6 +72,8 @@ std::optional<User> DatabaseHandler::fetch_user(std::string username) {
 				user.joinChat(c);
 			}
 		}
+
+		std::cout << "Chats: " << user.getChats().size() << '\n';
 
 		return user;
 	}

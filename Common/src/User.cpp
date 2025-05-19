@@ -8,6 +8,7 @@
 #include <SFML/Network.hpp>
 
 #include "User.hpp"
+#include "Chat.hpp"
 
 
 User::User(std::string username, std::string password, std::string email) {
@@ -31,6 +32,10 @@ void User::setEmail(std::string email) {
 	this->email = email; 
 }
 
+void User::setChats(std::vector<Chat> chats) {
+	this->chats = chats;
+}
+
 
 std::string User::getUsername() {
 	return username;
@@ -51,6 +56,8 @@ std::vector<Chat> User::getChats() {
 
 void User::joinChat(Chat& chat) {
 	std::cout << "Joining chat\n";
+
+	chats.push_back(chat);
 }
 
 void User::leaveChat(Chat& chat) {

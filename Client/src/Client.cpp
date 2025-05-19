@@ -35,6 +35,18 @@ void Client::send_register_request() {
 		throw ClientException("Unable to register an account!\n");
 }
 
+User Client::receive_login_response(sf::Packet& packet) {
+	auto response_data = packet_manager.extract_login_response_packet(packet);
+	if (!response_data) {
+		std::cout << "Error!\n";
+		return User{"", "", ""};
+	}
+
+	User user(response_data->username, response_data->password, response_data->email);
+	user.setChats(response_data->chats);
+
+	return user;
+}
 
 void Client::load_user(char op) {
 	std::string i_username;
@@ -49,6 +61,24 @@ void Client::load_user(char op) {
 
 			user = std::make_unique<User>(i_username, i_password, "");
 			send_login_request();
+
+			sf::Packet response_packet;
+			server_socket.receive(response_packet);
+
+			user = std::make_unique<User>(receive_login_response(response_packet));
+
+			std::cout << "Running as " << user->getUsername() << '\n';
+			std::cout << "Email: " << user->getEmail() << '\n';
+			std::cout << "Dupa: " << user->getChats().size() << '\n';
+			for (Chat& c : user->getChats()) {
+				std::cout << "Chat [" << c.getName() << "]\n";
+				for (std::string member : c.getMembers())
+					std::cout << member << " ";
+				std::cout << "\n";
+				for (Message& m : c.getMessages()) {
+					std::cout << m.getAuthor() << "said \"" << m.getContent() << "\"\n";
+				}
+			}
 			
 			break;
 		}

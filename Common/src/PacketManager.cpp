@@ -36,19 +36,24 @@ sf::Packet PacketManager::create_login_response_packet(User& user) {
 
 	std::vector<Chat> chats = user.getChats();
 
-	packet << "LR" << user.getUsername() << user.getEmail() << user.getPassword()
-		<< chats.size();
+	packet << "LR" << user.getUsername() << user.getEmail() << user.getPassword();
+
+	std::uint32_t chats_count = static_cast<std::uint32_t>(chats.size());
+
+	packet << chats_count;
 
 	for (Chat& chat : chats) {
 		packet << chat.getName();
 
 		auto members = chat.getMembers();
-		packet << members.size();
+		std::uint32_t members_count = static_cast<std::uint32_t>(members.size());
+		packet << members_count;
 		for (std::string member : members)
 			packet << member;
 
 		auto messages = chat.getMessages();
-		packet << messages.size();
+		std::uint32_t messages_count = static_cast<std::uint32_t>(messages.size());
+		packet << messages_count;
 		for (Message& message : messages)
 			packet << message.getAuthor() << message.getContent();
 	}
@@ -57,31 +62,39 @@ sf::Packet PacketManager::create_login_response_packet(User& user) {
 }
 
 std::optional<ResponseLoginData> PacketManager::extract_login_response_packet(sf::Packet& packet) {
+	std::string type;
+	packet >> type;
+	if (type != "LR") {
+		std::cout << "Invalid packet type!\n";
+		return std::nullopt;
+	}
+
 	ResponseLoginData lrdata;
 
 	packet >> lrdata.username >> lrdata.email >> lrdata.password;
 
-	int chat_count = 0;
-	int members_count = 0;
-	int message_count = 0;
+	std::uint32_t chat_count = 0;
+	std::uint32_t members_count = 0;
+	std::uint32_t message_count = 0;
 
 	packet >> chat_count;
+	std::cout << "Chat count = " << chat_count << '\n';
 
 	std::vector<Chat> chats;
-	for (int i = 0; i < chat_count; i++) {
+	for (std::uint32_t i = 0; i < chat_count; i++) {
 		std::vector<std::string> members;
 		std::vector<Message> messages;
 
 		std::string chat_name;
 		packet >> chat_name >> members_count;
 
-		for (int j = 0; j < members_count; j++) {
+		for (std::uint32_t j = 0; j < members_count; j++) {
 			std::string username;
 			packet >> username;
 			members.push_back(username);
 		}
 		packet >> message_count;
-		for (int k = 0; k < message_count; k++) {
+		for (std::uint32_t k = 0; k < message_count; k++) {
 			std::string author;
 			std::string content;
 			packet >> author >> content;

@@ -25,6 +25,8 @@ class Client {
 		void send_login_request();
 		void send_register_request();
 
+		User receive_login_response(sf::Packet& packet);
+
 	public:
 		Client(sf::IpAddress addr, unsigned int s_port);
 		~Client();

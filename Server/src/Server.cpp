@@ -53,11 +53,14 @@ bool Server::handle_login_request(LoginData& ldata, sf::TcpSocket& client_s) {
 	if (user) {
 		if (user->getPassword() == ldata.password) {
 			std::cout << "Logged in!\n";
-			
-			sf::Packet r_packet = packet_manager.create_login_response_packet(*user);
-			client_s.send(r_packet);
 
-			return true;
+			sf::Packet r_packet = packet_manager.create_login_response_packet(*user);
+			if (client_s.send(r_packet) == sf::Socket::Status::Done) {
+				return true;
+			} else {
+				std::cout << "Error while sending data to client\n";
+				return false;
+			}
 		} else {
 			std::cout << "Incorrect password!\n";
 		}
