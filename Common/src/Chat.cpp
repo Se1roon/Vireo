@@ -9,8 +9,16 @@
 #include "Message.hpp"
 
 
+Chat::Chat(std::string name, std::vector<std::string> members, std::vector<Message> messages) :
+	name(name), members(members), messages(messages) {}
+
+
 void Chat::setName(std::string name) {
 	this->name = name;
+}
+
+std::string Chat::getName() {
+	return name;
 }
 
 std::vector<std::string> Chat::getMembers() {

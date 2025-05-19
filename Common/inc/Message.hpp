@@ -4,8 +4,6 @@
 #pragma once
 
 #include <string>
-#include <chrono>
-
 
 /**
  * @class Message
@@ -15,13 +13,13 @@ class Message {
 	private:
 		std::string content;
 		std::string author_name;
-		std::chrono::system_clock::time_point timestamp; // May need to think about storing dates more.
+		// I don't want to deal with dates now
+		//std::chrono::system_clock::time_point timestamp; // May need to think about storing dates more.
 
 	public:
-		Message(std::string content, std::string author, std::chrono::system_clock::time_point date);
+		Message(std::string content, std::string author);
 
 		std::string getContent();
 		std::string getAuthor();
-		std::chrono::system_clock::time_point& getDate();
 };
 

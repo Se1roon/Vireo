@@ -4,9 +4,11 @@
 #pragma once 
 
 #include <string>
+#include <vector>
 
 #include <SFML/Network.hpp>
 
+#include "Chat.hpp"
 
 /**
  * @class User
@@ -18,6 +20,7 @@ class User {
 		std::string username;
 		std::string password;
 		std::string email;
+		std::vector<Chat> chats;
 
 	public:
 		User(std::string username, std::string password, std::string email);
@@ -25,10 +28,14 @@ class User {
 		std::string getUsername();
 		std::string getPassword();
 		std::string getEmail();
+		std::vector<Chat> getChats();
 
 		void setUsername(std::string username);
 		void setPassword(std::string password);
 		void setEmail(std::string email);
+		
+		void joinChat(Chat& chat);
+		void leaveChat(Chat& chat);
 
 		User operator=(User const& u) const;
 };

@@ -1,6 +1,8 @@
 /// @file User.cpp
 /// @brief Implementation of the User class.
 
+#include <iostream>
+#include <vector>
 #include <string>
 
 #include <SFML/Network.hpp>
@@ -40,6 +42,19 @@ std::string User::getPassword() {
 
 std::string User::getEmail() {
 	return email;
+}
+
+std::vector<Chat> User::getChats() {
+	return chats;
+}
+
+
+void User::joinChat(Chat& chat) {
+	std::cout << "Joining chat\n";
+}
+
+void User::leaveChat(Chat& chat) {
+	std::cout << "Leaving chat\n";
 }
 
 

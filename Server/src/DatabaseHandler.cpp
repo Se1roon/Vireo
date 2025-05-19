@@ -1,17 +1,22 @@
 /// @file DatabaseHandler.cpp
 /// @brief Implementation of the DatabaseHandler class.
 
+#include <vector>
 #include <string>
 #include <memory>
 #include <optional>
 
 #include <bsoncxx/builder/basic/document.hpp>
+#include <bsoncxx/builder/basic/array.hpp>
 #include <bsoncxx/types.hpp>
 #include <bsoncxx/json.hpp>
 #include <mongocxx/uri.hpp>
 #include <mongocxx/client.hpp>
 
 #include "DatabaseHandler.hpp"
+#include "User.hpp"
+#include "Chat.hpp"
+#include "Message.hpp"
 
 
 using bsoncxx::builder::basic::kvp;
@@ -34,7 +39,40 @@ std::optional<User> DatabaseHandler::fetch_user(std::string username) {
 		std::string password(user_view["password"].get_string().value);
 		std::string email(user_view["email"].get_string().value);
 
-		return User{username, password, email};
+		User user(username, password, email);
+
+		auto chats = user_view["chats"].get_array().value;
+		for (auto&& chat : chats) {
+			auto oid = chat.get_oid().value;
+			auto chat_doc = (*client)["Vireo"]["Chats"].find_one(make_document(kvp("_id", oid)));
+			if (chat_doc) {
+				auto chat_view = chat_doc->view();
+				
+				std::vector<std::string> usernames;
+				auto members = chat_view["members"].get_array().value;
+				for (auto&& member : members) {
+					std::string member_username = std::string(member.get_string().value);
+					usernames.push_back(member_username);
+				}
+
+				std::vector<Message> messages_;
+				auto messages = chat_view["messages"].get_array().value;
+				for (auto&& message : messages) {
+					auto message_doc = message.get_document().view();
+
+					std::string author(message_doc["author"].get_string().value);
+					std::string content(message_doc["content"].get_string().value);
+
+					messages_.push_back({content, author});
+				}
+				
+				std::string chat_name(chat_view["name"].get_string().value);
+				Chat c(chat_name, usernames, messages_);
+				user.joinChat(c);
+			}
+		}
+
+		return user;
 	}
 	
 	return std::nullopt;

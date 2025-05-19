@@ -50,15 +50,6 @@ void Client::load_user(char op) {
 			user = std::make_unique<User>(i_username, i_password, "");
 			send_login_request();
 			
-			sf::Packet response_packet;
-			if (server_socket.receive(response_packet) != sf::Socket::Status::Done) {
-				std::cout << "Doesn't work yet :(\n";
-			}
-
-			std::string status;
-			response_packet >> status;
-			std::cout << status << '\n';
-
 			break;
 		}
 		case 'R': {

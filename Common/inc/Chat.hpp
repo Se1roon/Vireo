@@ -19,9 +19,10 @@ class Chat {
 		std::vector<Message> messages;
 
 	public:
-		// I don't think a constructor is needed (at least for now)
+		Chat(std::string name, std::vector<std::string> members, std::vector<Message> messages);
 		
 		void setName(std::string name);
+		std::string getName();
 		
 		std::vector<std::string> getMembers();
 		void addMember(std::string username);

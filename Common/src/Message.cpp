@@ -10,8 +10,8 @@
 using namespace std::chrono;
 
 
-Message::Message(std::string content, std::string author, system_clock::time_point date) :
-	content(content), author_name(author), timestamp(date) {}
+Message::Message(std::string content, std::string author) :
+	content(content), author_name(author) {}
 
 
 std::string Message::getContent() {
@@ -20,9 +20,5 @@ std::string Message::getContent() {
 
 std::string Message::getAuthor() {
 	return author_name;
-}
-
-system_clock::time_point& Message::getDate() {
-	return timestamp;
 }
 
