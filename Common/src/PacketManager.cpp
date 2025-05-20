@@ -78,7 +78,6 @@ std::optional<ResponseLoginData> PacketManager::extract_login_response_packet(sf
 	std::uint32_t message_count = 0;
 
 	packet >> chat_count;
-	std::cout << "Chat count = " << chat_count << '\n';
 
 	std::vector<Chat> chats;
 	for (std::uint32_t i = 0; i < chat_count; i++) {

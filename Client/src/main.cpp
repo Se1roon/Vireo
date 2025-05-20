@@ -7,6 +7,7 @@
 
 #include "Client.hpp"
 #include "ConfigParser.hpp"
+#include "Chat.hpp"
 
 
 int main() {
@@ -29,6 +30,20 @@ int main() {
 		Client client({127, 0, 0, 1}, server_port);
 
 		client.load_user(login[0]);
+
+		std::cout << '\n';
+		client.render_hello_message();
+		std::cout << '\n';
+
+		auto selected_chat = client.render_chat_list();
+
+		if (selected_chat) {
+			std::cout << '\n';
+			client.render_chat(*selected_chat);
+		} else {
+			std::cout << ":(\n";
+		}
+
 	} catch (std::exception& e) {
 		std::cout << e.what() << '\n';
 	}

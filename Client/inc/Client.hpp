@@ -4,11 +4,13 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
 #include <SFML/Network.hpp>
 
 #include "User.hpp"
 #include "PacketManager.hpp"
+#include "Chat.hpp"
 
 
 /**
@@ -32,5 +34,9 @@ class Client {
 		~Client();
 		
 		void load_user(char op);
+
+		void render_hello_message();
+		std::optional<Chat> render_chat_list();
+		void render_chat(Chat& chat);
 };
 

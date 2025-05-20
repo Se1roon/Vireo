@@ -2,6 +2,9 @@
 /// @brief Implementation of Client class.
 
 #include <iostream>
+#include <iomanip>
+#include <vector>
+#include <optional>
 #include <memory>
 
 #include <SFML/Network.hpp>
@@ -10,6 +13,8 @@
 #include "ClientException.hpp"
 #include "PacketManager.hpp"
 #include "User.hpp"
+#include "Chat.hpp"
+#include "Message.hpp"
 
 
 Client::Client(sf::IpAddress s_addr, unsigned int s_port) {
@@ -67,19 +72,6 @@ void Client::load_user(char op) {
 
 			user = std::make_unique<User>(receive_login_response(response_packet));
 
-			std::cout << "Running as " << user->getUsername() << '\n';
-			std::cout << "Email: " << user->getEmail() << '\n';
-			std::cout << "Dupa: " << user->getChats().size() << '\n';
-			for (Chat& c : user->getChats()) {
-				std::cout << "Chat [" << c.getName() << "]\n";
-				for (std::string member : c.getMembers())
-					std::cout << member << " ";
-				std::cout << "\n";
-				for (Message& m : c.getMessages()) {
-					std::cout << m.getAuthor() << "said \"" << m.getContent() << "\"\n";
-				}
-			}
-			
 			break;
 		}
 		case 'R': {
@@ -106,5 +98,36 @@ void Client::load_user(char op) {
 			break;
 		}
 	}
+}
+
+void Client::render_chat(Chat& chat) {
+	for (Message& message : chat.getMessages())
+		std::cout << "[" << message.getAuthor() << "]\n" << message.getContent() << "\n\n";
+}
+
+void Client::render_hello_message() {
+	std::cout << "Welcome back " << user->getUsername() << "!\n";
+}
+
+std::optional<Chat> Client::render_chat_list() {
+	std::vector<Chat> chats = user->getChats();
+
+	std::cout << "Your chats:\n\n";
+
+	int i = 1;
+	for (Chat& chat : chats)
+		std::cout << i << "- [" << chat.getName() << "]\n";
+
+	int chat_num = 1;
+	std::cout << "\nEnter chat number: ";
+	std::cin >> chat_num;
+
+	try {
+		return chats.at(chat_num - 1);
+	} catch (std::out_of_range& e) {
+		std::cout << "There is no chat with number " << chat_num << ".\n";
+	}
+
+	return std::nullopt;
 }
 
