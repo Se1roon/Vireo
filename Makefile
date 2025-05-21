@@ -5,7 +5,7 @@ client:
 	g++ -o ./bin/client Client/src/*.cpp Common/src/*.cpp \
 		-I./Client/inc/ -I./Common/inc/ \
 		-L./SFML/lib/ \
-		-lsfml-network \
+		-lsfml-network -lsfml-system -lsfml-window -lsfml-graphics \
 		-std=c++20 -Wall 
 
 
