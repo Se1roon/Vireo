@@ -44,6 +44,11 @@ int main() {
 			std::cout << ":(\n";
 		}
 
+		std::string message;
+		std::cout << "\nType something: " << std::flush;
+		std::getline(std::cin >> std::ws, message);
+		
+		client.send_message(message, *selected_chat);
 	} catch (std::exception& e) {
 		std::cout << e.what() << '\n';
 	}

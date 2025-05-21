@@ -26,6 +26,7 @@ class Client {
 
 		void send_login_request();
 		void send_register_request();
+		void send_new_message_request(std::string msg_content, Chat& chat);
 
 		User receive_login_response(sf::Packet& packet);
 
@@ -34,6 +35,7 @@ class Client {
 		~Client();
 		
 		void load_user(char op);
+		void send_message(std::string content, Chat& chat);
 
 		void render_hello_message();
 		std::optional<Chat> render_chat_list();

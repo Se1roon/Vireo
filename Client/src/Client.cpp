@@ -40,6 +40,12 @@ void Client::send_register_request() {
 		throw ClientException("Unable to register an account!\n");
 }
 
+void Client::send_new_message_request(std::string msg_content, Chat& chat) {
+	sf::Packet nmpacket = packet_manager.create_new_message_packet(msg_content, chat);
+	if (server_socket.send(nmpacket) != sf::Socket::Status::Done)
+		throw ClientException("Unable to send new message to the server!\n");
+}
+
 User Client::receive_login_response(sf::Packet& packet) {
 	auto response_data = packet_manager.extract_login_response_packet(packet);
 	if (!response_data) {
@@ -51,6 +57,10 @@ User Client::receive_login_response(sf::Packet& packet) {
 	user.setChats(response_data->chats);
 
 	return user;
+}
+
+void Client::send_message(std::string content, Chat& chat) {
+	send_new_message_request(content, chat);
 }
 
 void Client::load_user(char op) {

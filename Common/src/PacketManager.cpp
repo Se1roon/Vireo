@@ -61,6 +61,30 @@ sf::Packet PacketManager::create_login_response_packet(User& user) {
 	return packet;
 }
 
+sf::Packet PacketManager::create_new_message_packet(std::string content, Chat& chat) {
+	sf::Packet packet;
+
+	packet << "NM" << chat.getName() << content; // the server will know how sent it
+	
+	return packet;
+}
+
+std::optional<NewMessageData> PacketManager::extract_new_message_packet(sf::Packet& packet) {
+	/*
+	std::string type;
+	packet >> type;
+	if (type != "NM") {
+		std::cout << "Invalid packet type\n";
+		return std::nullopt;
+	}
+	*/
+
+	NewMessageData nmdata;
+	packet >> nmdata.chat_name >> nmdata.msg_content;
+
+	return nmdata;
+}
+
 std::optional<ResponseLoginData> PacketManager::extract_login_response_packet(sf::Packet& packet) {
 	std::string type;
 	packet >> type;

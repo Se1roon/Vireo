@@ -94,6 +94,14 @@ void Server::handle_requests() {
 				sf::Socket::Status status = c->socket.receive(packet);
 
 				if (status == sf::Socket::Status::Done) {
+					/* TODO: There is something weird because here it is checking 
+					 * the type and extracting one field from the packet. However
+					 * when implementing PacketManager extracting methods I forgot 
+					 * about it and implemeneted type checks there as well. For some
+					 * reason it works how it is and breaks when I delete the checks
+					 * in PacketManager. Maybe need some investigation.
+					 */
+
 					std::string request_type;
 					packet >> request_type;
 
@@ -123,6 +131,13 @@ void Server::handle_requests() {
 								// Send response
 							}
 						}
+					}
+					else if (request_type == "NM") {
+						std::cout << "New Message came";
+						
+						auto nmdata = packet_manager.extract_new_message_packet(packet);
+						if (nmdata) 
+							std::cout << "\"" << nmdata->msg_content << "\" in [" << nmdata->chat_name << "]\n";
 					}
 
 					++c;
