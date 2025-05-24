@@ -9,8 +9,9 @@
 
 #include "Client.hpp"
 #include "ConfigParser.hpp"
-#include "Chat.hpp"
-#include "PHRectangle.hpp"
+#include "Chat.hpp" 
+#include "GUIManager.hpp"
+#include "PHElement.hpp"
 
 
 using namespace GUI;
@@ -78,10 +79,7 @@ int main() {
 	sf::Font main_font("fonts/SourceSansPro-Regular.ttf");
 	sf::Font title_font("fonts/Inter-Regular.otf");
 
-	PHRectangle login_rect(main_font, "Username", 48);
-	login_rect.setSize({ 500.f, 88.f });
-	login_rect.setPosition({ main_window.getSize().x * .5f - login_rect.getSize().x * .5f, 205.f });
-
+	GUIManager gui_manager(main_window, main_font, title_font);
 
 	bool isLoginState = true;
 	bool isRegisterState = true;
@@ -90,14 +88,19 @@ int main() {
 			if (event->is<sf::Event::Closed>())
 				main_window.close();
 
-			if (const auto* mouseButtonPressed =  event->getIf<sf::Event::MouseButtonPressed>()) {
+			if (const auto* mouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>()) {
 				if (mouseButtonPressed->button == sf::Mouse::Button::Left) {
-					if (isLoginState && 
-						mouseButtonPressed->position.x <= 1045 && mouseButtonPressed->position.x >= 835 &&
-						mouseButtonPressed->position.y <= 623 && mouseButtonPressed->position.y >= 601) {
-
-						isLoginState = false;
-						isRegisterState = true;
+					if (isLoginState) { 
+						auto action = gui_manager.loginpage_action(mouseButtonPressed->position);
+						if (action) {
+							if (*action == PROMPT) {
+								isLoginState = false;
+								isRegisterState = true;
+							} else if (*action == USERNAME)
+								std::cout << "Username click!\n";
+							else if (*action == PASSWORD)
+								std::cout << "Password click!\n";
+						}
 					} else if (isRegisterState &&
 						mouseButtonPressed->position.x <= 1030 && mouseButtonPressed->position.x >= 850 &&
 						mouseButtonPressed->position.y <= 694 && mouseButtonPressed->position.y >= 672) {
@@ -111,12 +114,10 @@ int main() {
 
 		main_window.clear({ MAIN_COLOR_R, MAIN_COLOR_G, MAIN_COLOR_B });
 
-		if (isLoginState) {
-			//client.render_login(main_window, main_font, title_font);
-			login_rect.render(main_window);
-		}
+		if (isLoginState)
+			gui_manager.render_login_page();
 		else if (isRegisterState)
-			client.render_register(main_window, main_font, title_font);
+			gui_manager.render_register_page();
 
 
 		main_window.display();

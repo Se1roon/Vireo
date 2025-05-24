@@ -4,9 +4,11 @@
 
 #include <SFML/Graphics.hpp>
 
+#include "PHElement.hpp"
+
 
 namespace GUI {
-	class PHRectangle {
+	class PHRectangle : public PHElement {
 		private:
 			sf::RectangleShape rect;
 			std::unique_ptr<sf::Text> placeholder;
@@ -42,7 +44,7 @@ namespace GUI {
 			
 			bool hasBeenClicked(sf::Vector2i& mousePosition);
 
-			void render(sf::RenderWindow& window);
+			void render(sf::RenderWindow& window) override;
 	};
 };
 

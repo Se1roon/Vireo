@@ -142,16 +142,3 @@ std::optional<Chat> Client::render_chat_list() {
 	return std::nullopt;
 }
 
-void Client::render_login(sf::RenderWindow& window, sf::Font& main_font, sf::Font& title_font) {
-	sf::Text title(title_font);
-	title.setString("Vireo");
-	title.setCharacterSize(72);
-	title.setFillColor({ ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B });
-
-	sf::FloatRect title_bounds = title.getLocalBounds();
-	float x = window_width / 2 + title_bounds.size.x / 2;
-	title.setPosition({ x, window_height / 2 });
-
-	window.draw(title);
-}
-
