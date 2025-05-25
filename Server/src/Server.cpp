@@ -75,8 +75,16 @@ bool Server::handle_register_request(RegisterData& rdata, sf::TcpSocket& client_
 
 	User user(rdata.username, rdata.password, rdata.email);
 
-	db_handler->insert_user(user);
+	sf::Packet r_packet;
+	if (db_handler->insert_user(user))
+		r_packet = packet_manager.create_register_response_packet(true);
+	else
+		r_packet = packet_manager.create_register_response_packet(false);
 
+	if (client_s.send(r_packet) == sf::Socket::Status::Done)
+		return true;
+	
+	std::cout << "Error inserting user!\n";
 	return false;
 }
 
@@ -125,11 +133,8 @@ void Server::handle_requests() {
 
 						auto rdata = packet_manager.extract_register_packet(packet);
 						if (rdata) {
-							if (handle_register_request(*rdata, c->socket)) {
-								// Maybe go back to login/register?
+							if (handle_register_request(*rdata, c->socket))
 								c->username = rdata->username;
-								// Send response
-							}
 						}
 					}
 					else if (request_type == "NM") {

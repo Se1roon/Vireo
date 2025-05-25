@@ -61,6 +61,33 @@ sf::Packet PacketManager::create_login_response_packet(User& user) {
 	return packet;
 }
 
+sf::Packet PacketManager::create_register_response_packet(bool success) {
+	sf::Packet packet;
+	packet << "RR";
+
+	if (success)
+		packet << "S";
+	else
+		packet << "F";
+
+	return packet;
+}
+
+bool PacketManager::extract_register_response_packet(sf::Packet& packet) {
+	std::string type;
+	packet >> type;
+	if (type != "RR") {
+		std::cout << "Invalid packet type!\n";
+		return false;
+	}
+
+	std::string status;
+	packet >> status;
+
+	return (status == "S");
+}
+
+
 sf::Packet PacketManager::create_new_message_packet(std::string content, Chat& chat) {
 	sf::Packet packet;
 

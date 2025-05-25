@@ -36,8 +36,11 @@ class Client {
 
 		Client(sf::IpAddress addr, unsigned int s_port);
 		~Client();
+
+		User& getUser();
 		
-		void load_user(char op);
+		bool load_user(std::string username, std::string password);
+		bool load_user(std::string username, std::string email, std::string password, std::string password_conf);
 		void send_message(std::string content, Chat& chat);
 
 		void render_hello_message();

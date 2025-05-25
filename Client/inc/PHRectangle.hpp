@@ -39,6 +39,7 @@ namespace GUI {
 			void setPosition(sf::Vector2f position);
 			void setSize(sf::Vector2f size);
 
+			std::string getPlaceholderText();
 			sf::Vector2f getPosition();
 			sf::Vector2f getSize();
 			

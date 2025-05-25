@@ -27,7 +27,7 @@ class DatabaseHandler {
 		DatabaseHandler(std::string connection_string);
 
 		std::optional<User> fetch_user(std::string username);
-		void insert_user(User& user); // Throw an exception if failed
+		bool insert_user(User& user);
 
 		bsoncxx::document::value user_to_document(User& user);
 };

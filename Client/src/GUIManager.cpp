@@ -1,6 +1,12 @@
+#include <iostream>
 #include <optional>
+#include <memory>
+#include <cctype>
+#include <string>
 
 #include <SFML/Graphics.hpp>
+
+#include "User.hpp"
 
 #include "GUIManager.hpp"
 
@@ -9,6 +15,47 @@
 
 
 using namespace GUI;
+
+
+static const std::unordered_map<sf::Keyboard::Key, std::string> skey_map = {
+	{ sf::Keyboard::Key::A, "A"},
+	{ sf::Keyboard::Key::B, "B"},
+	{ sf::Keyboard::Key::C, "C"},
+	{ sf::Keyboard::Key::D, "D"},
+	{ sf::Keyboard::Key::E, "E"},
+	{ sf::Keyboard::Key::F, "F"},
+	{ sf::Keyboard::Key::G, "G"},
+	{ sf::Keyboard::Key::H, "H"},
+	{ sf::Keyboard::Key::I, "I"},
+	{ sf::Keyboard::Key::J, "J"},
+	{ sf::Keyboard::Key::K, "K"},
+	{ sf::Keyboard::Key::L, "L"},
+	{ sf::Keyboard::Key::M, "M"},
+	{ sf::Keyboard::Key::N, "N"},
+	{ sf::Keyboard::Key::O, "O"},
+	{ sf::Keyboard::Key::P, "P"},
+	{ sf::Keyboard::Key::Q, "Q"},
+	{ sf::Keyboard::Key::R, "R"},
+	{ sf::Keyboard::Key::S, "S"},
+	{ sf::Keyboard::Key::T, "T"},
+	{ sf::Keyboard::Key::U, "U"},
+	{ sf::Keyboard::Key::V, "V"},
+	{ sf::Keyboard::Key::W, "W"},
+	{ sf::Keyboard::Key::X, "X"},
+	{ sf::Keyboard::Key::Y, "Y"},
+	{ sf::Keyboard::Key::Z, "Z"},
+	{ sf::Keyboard::Key::Num0, "0" },
+	{ sf::Keyboard::Key::Num1, "1" },
+	{ sf::Keyboard::Key::Num2, "2" },
+	{ sf::Keyboard::Key::Num3, "3" },
+	{ sf::Keyboard::Key::Num4, "4" },
+	{ sf::Keyboard::Key::Num5, "5" },
+	{ sf::Keyboard::Key::Num6, "6" },
+	{ sf::Keyboard::Key::Num7, "7" },
+	{ sf::Keyboard::Key::Num8, "8" },
+	{ sf::Keyboard::Key::Num9, "9" },
+	{ sf::Keyboard::Key::Period, "." }
+};
 
 
 // Maybe later add a vector of fonts
@@ -82,19 +129,136 @@ RegisterPage GUIManager::build_register_page() {
 
 
 std::optional<LoginPageAction> GUIManager::loginpage_action(sf::Vector2i mouse_position) {
-	// Prompt has been clicked
 	if (loginpage_data.prompt->hasBeenClicked(mouse_position))
-		return PROMPT;
+		return LPROMPT;
 	
-	// Username rect has been clicked
 	if (loginpage_data.username_rect->hasBeenClicked(mouse_position))
-		return USERNAME;
+		return LUSERNAME;
 	
-	// Password rect has been clicked
 	if (loginpage_data.password_rect->hasBeenClicked(mouse_position))
-		return PASSWORD;
+		return LPASSWORD;
 
 	return std::nullopt;
+}
+
+std::optional<RegisterPageAction> GUIManager::registerpage_action(sf::Vector2i mouse_position) {
+	if (registerpage_data.prompt->hasBeenClicked(mouse_position))
+		return RPROMPT;
+	
+	if (registerpage_data.username_rect->hasBeenClicked(mouse_position))
+		return RUSERNAME;
+	
+	if (registerpage_data.password_rect->hasBeenClicked(mouse_position))
+		return RPASSWORD;
+
+	if (registerpage_data.email_rect->hasBeenClicked(mouse_position))
+		return REMAIL;
+
+	if (registerpage_data.password_conf_rect->hasBeenClicked(mouse_position))
+		return RPASSWORD_C;
+
+	return std::nullopt;
+}
+
+
+void GUIManager::lusername_enter_key(bool shift, sf::Keyboard::Key key) {
+	std::string current_text = loginpage_data.username_rect->getPlaceholderText();
+	if (key == sf::Keyboard::Key::Backspace && current_text.length() > 0)
+		current_text.pop_back();
+	else if (shift) {
+		current_text.append(key_to_str(key));
+	}
+	else if (!shift)
+		current_text.append(str_to_lower(key_to_str(key)));
+
+	loginpage_data.username_rect->setPlaceholder(current_text);
+}
+
+void GUIManager::lpassword_enter_key(bool shift, sf::Keyboard::Key key) {
+	std::string current_text = loginpage_data.password_rect->getPlaceholderText();
+	if (key == sf::Keyboard::Key::Backspace && current_text.length() > 0)
+		current_text.pop_back();
+	else if (shift) {
+		current_text.append(key_to_str(key));
+	}
+	else if (!shift)
+		current_text.append(str_to_lower(key_to_str(key)));
+
+	loginpage_data.password_rect->setPlaceholder(current_text);
+}
+
+void GUIManager::rusername_enter_key(bool shift, sf::Keyboard::Key key) {
+	std::string current_text = registerpage_data.username_rect->getPlaceholderText();
+	if (key == sf::Keyboard::Key::Backspace && current_text.length() > 0)
+		current_text.pop_back();
+	else if (shift) {
+		current_text.append(key_to_str(key));
+	}
+	else if (!shift)
+		current_text.append(str_to_lower(key_to_str(key)));
+
+	registerpage_data.username_rect->setPlaceholder(current_text);
+}
+
+void GUIManager::rpassword_enter_key(bool shift, sf::Keyboard::Key key) {
+	std::string current_text = registerpage_data.password_rect->getPlaceholderText();
+	if (key == sf::Keyboard::Key::Backspace && current_text.length() > 0)
+		current_text.pop_back();
+	else if (shift) {
+		current_text.append(key_to_str(key));
+	}
+	else if (!shift)
+		current_text.append(str_to_lower(key_to_str(key)));
+
+	registerpage_data.password_rect->setPlaceholder(current_text);
+}
+
+void GUIManager::remail_enter_key(bool shift, sf::Keyboard::Key key) {
+	std::string current_text = registerpage_data.email_rect->getPlaceholderText();
+	if (key == sf::Keyboard::Key::Backspace && current_text.length() > 0)
+		current_text.pop_back();
+	else if (shift) {
+		if (key == sf::Keyboard::Key::Num2) current_text.append("@");
+		else current_text.append(key_to_str(key));
+	}
+	else if (!shift)
+		current_text.append(str_to_lower(key_to_str(key)));
+
+	registerpage_data.email_rect->setPlaceholder(current_text);
+}
+
+void GUIManager::rpassword_c_enter_key(bool shift, sf::Keyboard::Key key) {
+	std::string current_text = registerpage_data.password_conf_rect->getPlaceholderText();
+	if (key == sf::Keyboard::Key::Backspace && current_text.length() > 0)
+		current_text.pop_back();
+	else if (shift) {
+		current_text.append(key_to_str(key));
+	}
+	else if (!shift)
+		current_text.append(str_to_lower(key_to_str(key)));
+
+	registerpage_data.password_conf_rect->setPlaceholder(current_text);
+}
+
+
+LoginPageData GUIManager::get_loginpage_data() {
+	LoginPageData lpdata;
+
+	lpdata.username = loginpage_data.username_rect->getPlaceholderText();
+	lpdata.password = loginpage_data.password_rect->getPlaceholderText();
+
+	return lpdata;
+}
+
+RegisterPageData GUIManager::get_registerpage_data() {
+	RegisterPageData rpdata;
+
+	rpdata.username = registerpage_data.username_rect->getPlaceholderText();
+	rpdata.email= registerpage_data.email_rect->getPlaceholderText();
+	rpdata.password = registerpage_data.password_rect->getPlaceholderText();
+	rpdata.password_conf = registerpage_data.password_conf_rect->getPlaceholderText();
+
+	return rpdata;
 }
 
 
@@ -112,5 +276,29 @@ void GUIManager::render_register_page() {
 	registerpage_data.password_rect->render(window);
 	registerpage_data.password_conf_rect->render(window);
 	registerpage_data.prompt->render(window);
+}
+
+void GUIManager::render_chatlist_page(User& user) {
+	sf::Text username(main_font);
+
+	username.setString(user.getUsername());
+	username.setCharacterSize(36);
+	username.setFillColor({ ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B });
+	username.setPosition({ 100.f, 200.f });
+
+	window.draw(username);
+}
+
+
+std::string GUIManager::key_to_str(sf::Keyboard::Key key) {
+	auto k_it = skey_map.find(key);
+
+	return (k_it != skey_map.end() ? k_it->second : "");
+}
+
+std::string GUIManager::str_to_lower(std::string str) {
+	if (!str.empty())
+		str[0] = static_cast<char>( std::tolower(static_cast<unsigned char>(str[0])) );
+	return str;
 }
 

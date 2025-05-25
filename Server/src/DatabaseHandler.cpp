@@ -21,6 +21,7 @@
 
 using bsoncxx::builder::basic::kvp;
 using bsoncxx::builder::basic::make_document;
+using bsoncxx::builder::basic::make_array;
 
 
 DatabaseHandler::DatabaseHandler(std::string connection_string) {
@@ -81,22 +82,23 @@ std::optional<User> DatabaseHandler::fetch_user(std::string username) {
 	return std::nullopt;
 }
 
-void DatabaseHandler::insert_user(User& user) {
+bool DatabaseHandler::insert_user(User& user) {
 	auto db_users = (*client)["Vireo"]["Users"];
 	auto user_doc = user_to_document(user);
 
 	if (db_users.insert_one(user_doc.view())) {
 		std::cout << "Inserted [" << user.getUsername() << ":" << user.getPassword() << "] into the database.\n";
-	} else {
-		std::cout << "Exception\n";
+		return true;
 	}
+	return false;
 }
 
 bsoncxx::document::value DatabaseHandler::user_to_document(User& user) {
 	return make_document(
 		kvp("username", user.getUsername()),
 		kvp("email", user.getEmail()),
-		kvp("password", user.getPassword())
+		kvp("password", user.getPassword()),
+		kvp("chats", make_array())
 	);
 }
 

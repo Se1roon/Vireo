@@ -5,6 +5,8 @@
 
 #include <SFML/Graphics.hpp>
 
+#include "User.hpp"
+
 #include "PHElement.hpp"
 #include "PHRectangle.hpp"
 #include "PHText.hpp"
@@ -36,11 +38,17 @@ namespace GUI {
 		std::unique_ptr<PHRectangle> password_rect;
 	};
 
-	enum LoginPageAction {
-		USERNAME,
-		PASSWORD,
-		PROMPT
+	struct LoginPageData {
+		std::string username;
+		std::string password;
 	};
+
+	enum LoginPageAction {
+		LUSERNAME,
+		LPASSWORD,
+		LPROMPT
+	};
+
 
 	struct RegisterPage {
 		std::unique_ptr<PHText> title;
@@ -49,6 +57,21 @@ namespace GUI {
 		std::unique_ptr<PHRectangle> email_rect;
 		std::unique_ptr<PHRectangle> password_rect;
 		std::unique_ptr<PHRectangle> password_conf_rect;
+	};
+
+	struct RegisterPageData {
+		std::string username;
+		std::string email;
+		std::string password;
+		std::string password_conf;
+	};
+
+	enum RegisterPageAction {
+		RUSERNAME,
+		REMAIL,
+		RPASSWORD,
+		RPASSWORD_C,
+		RPROMPT
 	};
 
 
@@ -64,13 +87,29 @@ namespace GUI {
 			LoginPage build_login_page();
 			RegisterPage build_register_page();
 
+			std::string key_to_str(sf::Keyboard::Key key);
+			std::string str_to_lower(std::string str);
+
 		public:
 			GUIManager(sf::RenderWindow& window, sf::Font& main_font, sf::Font& second_font);
 
 			std::optional<LoginPageAction> loginpage_action(sf::Vector2i mouse_position);
+			std::optional<RegisterPageAction> registerpage_action(sf::Vector2i mouse_position);
+
+			void lusername_enter_key(bool shift, sf::Keyboard::Key key);
+			void lpassword_enter_key(bool shift, sf::Keyboard::Key key);
+
+			void rusername_enter_key(bool shift, sf::Keyboard::Key key);
+			void rpassword_enter_key(bool shift, sf::Keyboard::Key key);
+			void remail_enter_key(bool shift, sf::Keyboard::Key key);
+			void rpassword_c_enter_key(bool shift, sf::Keyboard::Key key);
+
+			LoginPageData get_loginpage_data();
+			RegisterPageData get_registerpage_data();
 
 			void render_login_page();
 			void render_register_page();
+			void render_chatlist_page(User& user);
 	};
 };
 

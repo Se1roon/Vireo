@@ -71,6 +71,10 @@ void PHRectangle::setSize(sf::Vector2f size) {
 }
 
 
+std::string PHRectangle::getPlaceholderText() {
+	return placeholder->getString();
+}
+
 sf::Vector2f PHRectangle::getPosition() {
 	return position;
 }

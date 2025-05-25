@@ -46,11 +46,13 @@ class PacketManager {
 		sf::Packet create_login_packet(User& user);
 		sf::Packet create_login_response_packet(User& user);
 		sf::Packet create_register_packet(User& user);
+		sf::Packet create_register_response_packet(bool success);
 		sf::Packet create_new_message_packet(std::string content, Chat& chat);
 
 		std::optional<LoginData> extract_login_packet(sf::Packet& packet);
 		std::optional<ResponseLoginData> extract_login_response_packet(sf::Packet& packet);
 		std::optional<RegisterData> extract_register_packet(sf::Packet& packet);
+		bool extract_register_response_packet(sf::Packet& packet);
 		std::optional<NewMessageData> extract_new_message_packet(sf::Packet& packet);
 };
 

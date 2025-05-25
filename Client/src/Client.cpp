@@ -29,6 +29,11 @@ Client::~Client() {
 }
 
 
+User& Client::getUser() {
+	return *user;
+}
+
+
 void Client::send_login_request() {
 	sf::Packet lpacket = packet_manager.create_login_packet(*user);
 	if (server_socket.send(lpacket) != sf::Socket::Status::Done)
@@ -64,52 +69,29 @@ void Client::send_message(std::string content, Chat& chat) {
 	send_new_message_request(content, chat);
 }
 
-void Client::load_user(char op) {
-	std::string i_username;
-	std::string i_password;
+bool Client::load_user(std::string username, std::string password) {
+	user = std::make_unique<User>(username, password, "");
+	send_login_request();
 
-	switch (op) {
-		case 'L': {
-			std::cout << "Provide username: ";
-			std::cin >> i_username;
-			std::cout << "Provide password: ";
-			std::cin >> i_password;
+	sf::Packet response_packet;
+	if (server_socket.receive(response_packet) != sf::Socket::Status::Done)
+		return false;
 
-			user = std::make_unique<User>(i_username, i_password, "");
-			send_login_request();
-
-			sf::Packet response_packet;
-			server_socket.receive(response_packet);
-
-			user = std::make_unique<User>(receive_login_response(response_packet));
-
-			break;
-		}
-		case 'R': {
-			std::string i_email;
-			std::string i_password_c;
-
-			std::cout << "Provide username: ";
-			std::cin >> i_username;
-			std::cout << "Provide email: ";
-			std::cin >> i_email;
-
-			do {
-				std::cout << "Provide password: ";
-				std::cin >> i_password;
-				std::cout << "Confirm password: ";
-				std::cin >> i_password_c;
-				if (i_password != i_password_c)
-					std::cout << "Passwords don't match!\n";
-			} while (i_password != i_password_c);
-
-			user = std::make_unique<User>(i_username, i_password, i_email);
-			send_register_request();
-
-			break;
-		}
-	}
+	user = std::make_unique<User>(receive_login_response(response_packet));
+	return true;
 }
+
+bool Client::load_user(std::string username, std::string email, std::string password, std::string password_conf) {
+	user = std::make_unique<User>(username, password, email);
+	send_register_request();
+
+	sf::Packet response_packet;
+	if (server_socket.receive(response_packet) != sf::Socket::Status::Done)
+		return false;
+
+	return packet_manager.extract_register_response_packet(response_packet);
+}
+
 
 void Client::render_chat(Chat& chat) {
 	for (Message& message : chat.getMessages())
