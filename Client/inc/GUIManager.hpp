@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <optional>
+#include <vector>
 
 #include <SFML/Graphics.hpp>
 
@@ -11,7 +12,6 @@
 #include "PHElement.hpp"
 #include "PHRectangle.hpp"
 #include "PHText.hpp"
-
 
 // Colors
 #define MAIN_COLOR_R 230
@@ -132,6 +132,7 @@ namespace GUI {
 			void render_login_page();
 			void render_register_page();
 			void render_chatlist_page(User& user);
+			void render_search_results(std::vector<std::string> usernames);
 	};
 };
 

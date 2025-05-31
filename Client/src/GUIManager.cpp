@@ -349,6 +349,19 @@ void GUIManager::render_chatlist_page(User& user) {
 	}
 }
 
+void GUIManager::render_search_results(std::vector<std::string> usernames) {
+	int i = 0;
+	for (std::string username : usernames) {
+		PHRectangle rect(main_font, username, 24);
+
+		rect.setSize({ chatlistpage_data.search_rect->getSize().x, 40.f });
+		rect.setPosition({ chatlistpage_data.search_rect->getPosition().x, 
+						   chatlistpage_data.search_rect->getPosition().y + chatlistpage_data.search_rect->getSize().y + 10.f + 50.f * i++ });
+
+		rect.render(window);
+	}
+}
+
 
 std::string GUIManager::key_to_str(sf::Keyboard::Key key) {
 	auto k_it = skey_map.find(key);

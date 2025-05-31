@@ -4,6 +4,7 @@
 #include <iostream>
 #include <charconv>
 #include <system_error>
+#include <vector>
 
 #include <SFML/Graphics.hpp>
 
@@ -47,6 +48,9 @@ int main() {
 	bool email_rect_focused = false;
 	bool password_c_rect_focused = false;
 	bool search_rect_focused = false;
+
+	std::vector<std::string> search_usernames;
+
 	while (main_window.isOpen()) {
 		while (const std::optional event = main_window.pollEvent()) {
 			if (event->is<sf::Event::Closed>())
@@ -165,8 +169,10 @@ int main() {
 
 						if (search_rect_focused) {
 							auto usernames = client.search_users(clpdata.search_term);
-							if (usernames)
+							if (usernames) {
+								search_usernames = *usernames;
 								isSearchState = true;
+							}
 						}
 					}
 				}
@@ -179,8 +185,11 @@ int main() {
 			gui_manager.render_login_page();
 		else if (isRegisterState)
 			gui_manager.render_register_page();
-		else if (isChatlistState)
+		else if (isChatlistState) {
 			gui_manager.render_chatlist_page(client.getUser());
+			if (isSearchState)
+				gui_manager.render_search_results(search_usernames);
+		}
 
 
 		main_window.display();
