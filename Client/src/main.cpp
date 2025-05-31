@@ -40,11 +40,13 @@ int main() {
 	bool isLoginState = true;
 	bool isRegisterState = false;
 	bool isChatlistState = false;
+	bool isSearchState = false;
 
 	bool username_rect_focused = false;
 	bool password_rect_focused = false;
 	bool email_rect_focused = false;
 	bool password_c_rect_focused = false;
+	bool search_rect_focused = false;
 	while (main_window.isOpen()) {
 		while (const std::optional event = main_window.pollEvent()) {
 			if (event->is<sf::Event::Closed>())
@@ -103,6 +105,16 @@ int main() {
 							email_rect_focused = false;
 							password_c_rect_focused = false;
 						}
+					} else if (isChatlistState) {
+						auto action = gui_manager.chatlistpage_action(mouseButtonPressed->position);
+						if (action) {
+							if (*action == CLSEARCH) {
+								search_rect_focused = true;
+							}
+						} else {
+							search_rect_focused = false;
+							isSearchState = false;
+						}
 					}
 				}
 			}
@@ -121,6 +133,9 @@ int main() {
 					gui_manager.rpassword_enter_key(keyPressed->shift, keyPressed->code);
 				if (isRegisterState && password_c_rect_focused)
 					gui_manager.rpassword_c_enter_key(keyPressed->shift, keyPressed->code);
+
+				if (isChatlistState && search_rect_focused)
+					gui_manager.search_enter_key(keyPressed->shift, keyPressed->code);
 
 				if (keyPressed->code == sf::Keyboard::Key::Enter) {
 					if (isLoginState) {
@@ -144,6 +159,14 @@ int main() {
 								isRegisterState = false;
 								isChatlistState = true;
 							}
+						}
+					} else if (isChatlistState) {
+						ChatListPageData clpdata = gui_manager.get_chatlistpage_data();
+
+						if (search_rect_focused) {
+							auto usernames = client.search_users(clpdata.search_term);
+							if (usernames)
+								isSearchState = true;
 						}
 					}
 				}

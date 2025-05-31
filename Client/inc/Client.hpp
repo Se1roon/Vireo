@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <optional>
+#include <vector>
 
 #include <SFML/Network.hpp>
 
@@ -27,6 +28,7 @@ class Client {
 		void send_login_request();
 		void send_register_request();
 		void send_new_message_request(std::string msg_content, Chat& chat);
+		void send_search_request(std::string search_term);
 
 		User receive_login_response(sf::Packet& packet);
 
@@ -42,6 +44,8 @@ class Client {
 		bool load_user(std::string username, std::string password);
 		bool load_user(std::string username, std::string email, std::string password, std::string password_conf);
 		void send_message(std::string content, Chat& chat);
+		
+		std::optional<std::vector<std::string>> search_users(std::string prefix);
 
 		void render_hello_message();
 		std::optional<Chat> render_chat_list();

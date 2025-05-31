@@ -73,6 +73,53 @@ sf::Packet PacketManager::create_register_response_packet(bool success) {
 	return packet;
 }
 
+sf::Packet PacketManager::create_search_packet(std::string search_term) {
+	sf::Packet packet;
+	packet << "S" << search_term;
+
+	return packet;
+}
+
+sf::Packet PacketManager::create_search_response_packet(std::vector<std::string> usernames) {
+	sf::Packet packet;
+	packet << "SR";
+
+	int uname_count = usernames.size();
+	packet << uname_count;
+
+	for (std::string username : usernames)
+		packet << username;
+
+	return packet;
+}
+
+std::optional<std::vector<std::string>> PacketManager::extract_search_response_packet(sf::Packet& packet) {
+	std::string type;
+	packet >> type;
+	if (type != "SR")
+		return std::nullopt;
+
+	int count = 0;
+	packet >> count;
+
+	std::vector<std::string> usernames;
+	for (int i = 0; i < count; i++) {
+		std::string username;
+		packet >> username;
+		usernames.push_back(username);
+	}
+
+	return usernames;
+}
+
+std::optional<std::string> PacketManager::extract_search_packet(sf::Packet& packet) {
+	std::string search_term;
+	packet >> search_term;
+
+	return search_term;
+}
+
+
 bool PacketManager::extract_register_response_packet(sf::Packet& packet) {
 	std::string type;
 	packet >> type;

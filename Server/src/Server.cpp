@@ -88,6 +88,17 @@ bool Server::handle_register_request(RegisterData& rdata, sf::TcpSocket& client_
 	return false;
 }
 
+bool Server::handle_search_request(std::string search_term, sf::TcpSocket& client_s) {
+	std::vector<std::string> usernames = db_handler->get_usernames(search_term);
+
+	sf::Packet response_packet = packet_manager.create_search_response_packet(usernames);
+	if (client_s.send(response_packet) == sf::Socket::Status::Done)
+		return true;
+
+	std::cout << "Error searching for users!\n";
+	return false;
+}
+
 
 void Server::handle_requests() {
 	if (selector.wait(sf::seconds(0.1f))) {
@@ -102,14 +113,6 @@ void Server::handle_requests() {
 				sf::Socket::Status status = c->socket.receive(packet);
 
 				if (status == sf::Socket::Status::Done) {
-					/* TODO: There is something weird because here it is checking 
-					 * the type and extracting one field from the packet. However
-					 * when implementing PacketManager extracting methods I forgot 
-					 * about it and implemeneted type checks there as well. For some
-					 * reason it works how it is and breaks when I delete the checks
-					 * in PacketManager. Maybe need some investigation.
-					 */
-
 					std::string request_type;
 					packet >> request_type;
 
@@ -143,6 +146,16 @@ void Server::handle_requests() {
 						auto nmdata = packet_manager.extract_new_message_packet(packet);
 						if (nmdata) 
 							std::cout << "\"" << nmdata->msg_content << "\" in [" << nmdata->chat_name << "]\n";
+					}
+					else if (request_type == "S") {
+						std::cout << "Search request\n";
+
+						auto search_term = packet_manager.extract_search_packet(packet);
+						if (search_term) {
+							if (!handle_search_request(*search_term, c->socket)) {
+								std::cout << "error happened :(\n";
+							}
+						}
 					}
 
 					++c;

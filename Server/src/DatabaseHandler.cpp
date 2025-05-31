@@ -82,6 +82,21 @@ std::optional<User> DatabaseHandler::fetch_user(std::string username) {
 	return std::nullopt;
 }
 
+std::vector<std::string> DatabaseHandler::get_usernames(std::string prefix) {
+	auto db_users = (*client)["Vireo"]["Users"];
+
+	std::string pattern = "^" + prefix;
+	auto cursor = db_users.find(make_document(kvp("username", make_document(kvp("$regex", pattern)))));
+
+	std::vector<std::string> usernames;
+	for (auto&& doc : cursor) {
+		std::string uname(doc["username"].get_string().value);
+		usernames.push_back(uname);
+	}
+
+	return usernames;
+}
+
 bool DatabaseHandler::insert_user(User& user) {
 	auto db_users = (*client)["Vireo"]["Users"];
 	auto user_doc = user_to_document(user);

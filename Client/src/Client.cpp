@@ -52,6 +52,12 @@ void Client::send_new_message_request(std::string msg_content, Chat& chat) {
 		throw ClientException("Unable to send new message to the server!\n");
 }
 
+void Client::send_search_request(std::string search_term) {
+	sf::Packet spacket = packet_manager.create_search_packet(search_term);
+	if (server_socket.send(spacket) != sf::Socket::Status::Done)
+		throw ClientException("Unable to query server for seraching!\n");
+}
+
 User Client::receive_login_response(sf::Packet& packet) {
 	auto response_data = packet_manager.extract_login_response_packet(packet);
 	if (!response_data) {
@@ -67,6 +73,21 @@ User Client::receive_login_response(sf::Packet& packet) {
 
 void Client::send_message(std::string content, Chat& chat) {
 	send_new_message_request(content, chat);
+}
+
+
+std::optional<std::vector<std::string>> Client::search_users(std::string prefix) {
+	send_search_request(prefix);
+
+	sf::Packet response_packet;
+	if (server_socket.receive(response_packet) != sf::Socket::Status::Done)
+		return std::nullopt;
+
+	auto usernames = packet_manager.extract_search_response_packet(response_packet);
+	if (usernames)
+		return *usernames;
+
+	return std::nullopt;
 }
 
 bool Client::load_user(std::string username, std::string password) {

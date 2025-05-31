@@ -7,6 +7,7 @@
 #include <SFML/Graphics.hpp>
 
 #include "User.hpp"
+#include "Chat.hpp"
 
 #include "GUIManager.hpp"
 
@@ -64,6 +65,7 @@ GUIManager::GUIManager(sf::RenderWindow& window, sf::Font& main_font, sf::Font& 
 
 	loginpage_data = build_login_page();
 	registerpage_data = build_register_page();
+	chatlistpage_data = build_chatlist_page();
 }
 
 
@@ -128,6 +130,30 @@ RegisterPage GUIManager::build_register_page() {
 }
 
 
+ChatListPage GUIManager::build_chatlist_page() {
+	ChatListPage clpage;
+
+	clpage.search_rect = std::make_unique<PHRectangle>(main_font, "Search", 18);
+	clpage.search_line = std::make_unique<sf::RectangleShape>();
+	clpage.chats_rect = std::make_unique<sf::RectangleShape>();
+
+	clpage.search_rect->setSize({ 210.f, 30.f });
+	clpage.search_rect->setPosition({ window.getSize().x * .5f - 105.f, 16.f });
+
+	clpage.search_line->setSize({ static_cast<float>(window.getSize().x), 5.f });
+	clpage.search_line->setFillColor({ ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B });
+	clpage.search_line->setPosition({ 0, 60.f });
+
+	clpage.chats_rect->setFillColor({ MAIN_COLOR_R, MAIN_COLOR_G, MAIN_COLOR_G });
+	clpage.chats_rect->setSize({ 230.f, window.getSize().y - 60.f });
+	clpage.chats_rect->setOutlineColor({ ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B });
+	clpage.chats_rect->setOutlineThickness(4);
+	clpage.chats_rect->setPosition({ 0, 64.f });
+
+	return clpage;
+}
+
+
 std::optional<LoginPageAction> GUIManager::loginpage_action(sf::Vector2i mouse_position) {
 	if (loginpage_data.prompt->hasBeenClicked(mouse_position))
 		return LPROMPT;
@@ -156,6 +182,13 @@ std::optional<RegisterPageAction> GUIManager::registerpage_action(sf::Vector2i m
 
 	if (registerpage_data.password_conf_rect->hasBeenClicked(mouse_position))
 		return RPASSWORD_C;
+
+	return std::nullopt;
+}
+
+std::optional<ChatListPageAction> GUIManager::chatlistpage_action(sf::Vector2i mouse_position) {
+	if (chatlistpage_data.search_rect->hasBeenClicked(mouse_position))
+		return CLSEARCH;
 
 	return std::nullopt;
 }
@@ -240,6 +273,18 @@ void GUIManager::rpassword_c_enter_key(bool shift, sf::Keyboard::Key key) {
 	registerpage_data.password_conf_rect->setPlaceholder(current_text);
 }
 
+void GUIManager::search_enter_key(bool shift, sf::Keyboard::Key key) {
+	std::string current_text = chatlistpage_data.search_rect->getPlaceholderText();
+	if (key == sf::Keyboard::Key::Backspace && current_text.length() > 0)
+		current_text.pop_back();
+	else if (shift)
+		current_text.append(key_to_str(key));
+	else if (!shift)
+		current_text.append(str_to_lower(key_to_str(key)));
+
+	chatlistpage_data.search_rect->setPlaceholder(current_text);
+}
+
 
 LoginPageData GUIManager::get_loginpage_data() {
 	LoginPageData lpdata;
@@ -261,6 +306,14 @@ RegisterPageData GUIManager::get_registerpage_data() {
 	return rpdata;
 }
 
+ChatListPageData GUIManager::get_chatlistpage_data() {
+	ChatListPageData clpdata;
+
+	clpdata.search_term = chatlistpage_data.search_rect->getPlaceholderText();
+
+	return clpdata;
+}
+
 
 void GUIManager::render_login_page() {
 	loginpage_data.title->render(window);
@@ -279,14 +332,21 @@ void GUIManager::render_register_page() {
 }
 
 void GUIManager::render_chatlist_page(User& user) {
-	sf::Text username(main_font);
+	chatlistpage_data.search_rect->render(window);
+	window.draw(*chatlistpage_data.search_line);
+	window.draw(*chatlistpage_data.chats_rect);
 
-	username.setString(user.getUsername());
-	username.setCharacterSize(36);
-	username.setFillColor({ ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B });
-	username.setPosition({ 100.f, 200.f });
+	int i = 0;
+	for (Chat& chat : user.getChats()) {
+		PHRectangle chat_rect(main_font, chat.getName(), 32);
 
-	window.draw(username);
+		chat_rect.setSize({ chatlistpage_data.chats_rect->getSize().x, 60.f });
+		chat_rect.setPosition({ 0, chatlistpage_data.chats_rect->getPosition().y + 60.f * i });
+		chat_rect.setBgColor({ MAIN_COLOR_R, MAIN_COLOR_G, MAIN_COLOR_B });
+		chat_rect.setFgColor({ ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B });
+
+		chat_rect.render(window);
+	}
 }
 
 

@@ -5,6 +5,7 @@
 
 #include <SFML/Graphics.hpp>
 
+#include "Chat.hpp"
 #include "User.hpp"
 
 #include "PHElement.hpp"
@@ -75,6 +76,21 @@ namespace GUI {
 	};
 
 
+	struct ChatListPage {
+		std::unique_ptr<PHRectangle> search_rect;
+		std::unique_ptr<sf::RectangleShape> search_line;
+		std::unique_ptr<sf::RectangleShape> chats_rect;
+	};
+
+	struct ChatListPageData {
+		std::string search_term;
+	};
+
+	enum ChatListPageAction {
+		CLSEARCH
+	};
+
+
 	class GUIManager {
 		private:
 			sf::RenderWindow& window;
@@ -83,9 +99,11 @@ namespace GUI {
 
 			LoginPage loginpage_data;
 			RegisterPage registerpage_data;
+			ChatListPage chatlistpage_data; 
 
 			LoginPage build_login_page();
 			RegisterPage build_register_page();
+			ChatListPage build_chatlist_page();
 
 			std::string key_to_str(sf::Keyboard::Key key);
 			std::string str_to_lower(std::string str);
@@ -95,6 +113,7 @@ namespace GUI {
 
 			std::optional<LoginPageAction> loginpage_action(sf::Vector2i mouse_position);
 			std::optional<RegisterPageAction> registerpage_action(sf::Vector2i mouse_position);
+			std::optional<ChatListPageAction> chatlistpage_action(sf::Vector2i mouse_position);
 
 			void lusername_enter_key(bool shift, sf::Keyboard::Key key);
 			void lpassword_enter_key(bool shift, sf::Keyboard::Key key);
@@ -104,8 +123,11 @@ namespace GUI {
 			void remail_enter_key(bool shift, sf::Keyboard::Key key);
 			void rpassword_c_enter_key(bool shift, sf::Keyboard::Key key);
 
+			void search_enter_key(bool shift, sf::Keyboard::Key key);
+
 			LoginPageData get_loginpage_data();
 			RegisterPageData get_registerpage_data();
+			ChatListPageData get_chatlistpage_data();
 
 			void render_login_page();
 			void render_register_page();

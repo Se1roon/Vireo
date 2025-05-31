@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 #include <optional>
+#include <vector>
 
 #include <mongocxx/instance.hpp>
 #include <mongocxx/client.hpp>
@@ -27,6 +28,7 @@ class DatabaseHandler {
 		DatabaseHandler(std::string connection_string);
 
 		std::optional<User> fetch_user(std::string username);
+		std::vector<std::string> get_usernames(std::string prefix);
 		bool insert_user(User& user);
 
 		bsoncxx::document::value user_to_document(User& user);
