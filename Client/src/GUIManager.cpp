@@ -145,12 +145,27 @@ ChatListPage GUIManager::build_chatlist_page() {
 	clpage.search_line->setPosition({ 0, 60.f });
 
 	clpage.chats_rect->setFillColor({ MAIN_COLOR_R, MAIN_COLOR_G, MAIN_COLOR_G });
-	clpage.chats_rect->setSize({ 230.f, window.getSize().y - 60.f });
+	clpage.chats_rect->setSize({ 330.f, window.getSize().y - 60.f });
 	clpage.chats_rect->setOutlineColor({ ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B });
 	clpage.chats_rect->setOutlineThickness(4);
 	clpage.chats_rect->setPosition({ 0, 64.f });
 
 	return clpage;
+}
+
+void GUIManager::build_search_results(std::vector<std::string> usernames) {
+	search_results.clear();
+
+	int i = 0;
+	for (std::string username : usernames) {
+		PHRectangle rect(main_font, username, 24);
+
+		rect.setSize({ chatlistpage_data.search_rect->getSize().x, 40.f });
+		rect.setPosition({ chatlistpage_data.search_rect->getPosition().x, 
+						   chatlistpage_data.search_rect->getPosition().y + chatlistpage_data.search_rect->getSize().y + 10.f + 50.f * i++ });
+
+		search_results.push_back(std::move(rect));
+	}
 }
 
 
@@ -189,6 +204,15 @@ std::optional<RegisterPageAction> GUIManager::registerpage_action(sf::Vector2i m
 std::optional<ChatListPageAction> GUIManager::chatlistpage_action(sf::Vector2i mouse_position) {
 	if (chatlistpage_data.search_rect->hasBeenClicked(mouse_position))
 		return CLSEARCH;
+
+	return std::nullopt;
+}
+
+std::optional<std::string> GUIManager::search_selection(sf::Vector2i mouse_position) {
+	for (PHRectangle& rect : search_results) {
+		std::cout << "Checking if [" << rect.getPlaceholderText() << "] has been clicked!\n";
+		if (rect.hasBeenClicked(mouse_position)) return rect.getPlaceholderText();
+	}
 
 	return std::nullopt;
 }
@@ -341,7 +365,7 @@ void GUIManager::render_chatlist_page(User& user) {
 		PHRectangle chat_rect(main_font, chat.getName(), 32);
 
 		chat_rect.setSize({ chatlistpage_data.chats_rect->getSize().x, 60.f });
-		chat_rect.setPosition({ 0, chatlistpage_data.chats_rect->getPosition().y + 60.f * i });
+		chat_rect.setPosition({ 0, chatlistpage_data.chats_rect->getPosition().y + 60.f * i++ });
 		chat_rect.setBgColor({ MAIN_COLOR_R, MAIN_COLOR_G, MAIN_COLOR_B });
 		chat_rect.setFgColor({ ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B });
 
@@ -349,17 +373,9 @@ void GUIManager::render_chatlist_page(User& user) {
 	}
 }
 
-void GUIManager::render_search_results(std::vector<std::string> usernames) {
-	int i = 0;
-	for (std::string username : usernames) {
-		PHRectangle rect(main_font, username, 24);
-
-		rect.setSize({ chatlistpage_data.search_rect->getSize().x, 40.f });
-		rect.setPosition({ chatlistpage_data.search_rect->getPosition().x, 
-						   chatlistpage_data.search_rect->getPosition().y + chatlistpage_data.search_rect->getSize().y + 10.f + 50.f * i++ });
-
-		rect.render(window);
-	}
+void GUIManager::render_search_results() {
+	for (PHRectangle& r : search_results)
+		r.render(window);
 }
 
 

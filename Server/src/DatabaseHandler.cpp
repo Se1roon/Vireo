@@ -117,3 +117,31 @@ bsoncxx::document::value DatabaseHandler::user_to_document(User& user) {
 	);
 }
 
+bool DatabaseHandler::create_chat(std::string creator, std::string peer) {
+	auto db_chats = (*client)["Vireo"]["Chats"];
+
+	auto chat_doc = make_document(
+			kvp("name", creator + " & " + peer),
+			kvp("members", make_array(creator, peer)),
+			kvp("messages", make_array()));
+
+	if (db_chats.insert_one(chat_doc.view())) {
+		std::cout << "Inserted [" << creator << " & " << peer << "] chat into the database.\n";
+
+		auto db_users = (*client)["Vireo"]["Users"];
+
+		auto creator_doc = db_users.find_one(make_document(kvp("username", creator)));
+		auto peer_doc = db_users.find_one(make_document(kvp("username", peer)));
+
+		auto update_push = make_document(
+				kvp("$push", make_document(kvp("chats", db_chats.find_one(make_document(kvp("name", creator + " & " + peer)))->view()["_id"].get_oid().value))));
+
+		db_users.update_one(creator_doc->view(), update_push.view());
+		db_users.update_one(peer_doc->view(), update_push.view());
+
+		return true;
+	}
+
+	return false;
+}
+

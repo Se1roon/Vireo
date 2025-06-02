@@ -58,6 +58,12 @@ void Client::send_search_request(std::string search_term) {
 		throw ClientException("Unable to query server for seraching!\n");
 }
 
+void Client::send_new_chat_request(std::string username) {
+	sf::Packet nhpacket = packet_manager.create_new_chat_packet(username);
+	if (server_socket.send(nhpacket) != sf::Socket::Status::Done)
+		throw ClientException("Unable to create new chat!\n");
+}
+
 User Client::receive_login_response(sf::Packet& packet) {
 	auto response_data = packet_manager.extract_login_response_packet(packet);
 	if (!response_data) {
@@ -113,35 +119,26 @@ bool Client::load_user(std::string username, std::string email, std::string pass
 	return packet_manager.extract_register_response_packet(response_packet);
 }
 
+void Client::create_new_chat(std::string username) {
+	std::vector<std::string> members = { user->getUsername(), username };
+	std::vector<Message> messages;
 
-void Client::render_chat(Chat& chat) {
-	for (Message& message : chat.getMessages())
-		std::cout << "[" << message.getAuthor() << "]\n" << message.getContent() << "\n\n";
-}
+	Chat new_chat(user->getUsername() + " & " + username, members, messages);
 
-void Client::render_hello_message() {
-	std::cout << "Welcome back " << user->getUsername() << "!\n";
-}
-
-std::optional<Chat> Client::render_chat_list() {
-	std::vector<Chat> chats = user->getChats();
-
-	std::cout << "Your chats:\n\n";
-
-	int i = 1;
-	for (Chat& chat : chats)
-		std::cout << i << "- [" << chat.getName() << "]\n";
-
-	int chat_num = 1;
-	std::cout << "\nEnter chat number: ";
-	std::cin >> chat_num;
-
-	try {
-		return chats.at(chat_num - 1);
-	} catch (std::out_of_range& e) {
-		std::cout << "There is no chat with number " << chat_num << ".\n";
+	send_new_chat_request(username);
+	
+	std::cout << "This blocs?\n";
+	sf::Packet response_packet;
+	if (server_socket.receive(response_packet) != sf::Socket::Status::Done) {
+		std::cout << "error\n";
+		return;
 	}
 
-	return std::nullopt;
-}
+	if (packet_manager.extract_new_chat_response_packet(response_packet)) {
+		std::cout << "Success - joining new chat!\n";
+		user->joinChat(new_chat);
+	}
+	else std::cout << "err\n";
 
+	return;
+}

@@ -93,6 +93,39 @@ sf::Packet PacketManager::create_search_response_packet(std::vector<std::string>
 	return packet;
 }
 
+sf::Packet PacketManager::create_new_chat_packet(std::string username) {
+	sf::Packet packet;
+	packet << "NH" << username;
+
+	return packet;
+}
+
+std::optional<std::string> PacketManager::extract_new_chat_packet(sf::Packet& packet) {
+	std::string username;
+	packet >> username;
+	return username;
+}
+
+sf::Packet PacketManager::create_new_chat_response_packet(bool success) {
+	sf::Packet packet;
+	packet << "NHR";
+	if (success) packet << "S";
+	else packet << "F";
+
+	return packet;
+}
+
+bool PacketManager::extract_new_chat_response_packet(sf::Packet& packet) {
+	std::string type;
+	packet >> type;
+	if (type != "NHR") return false;
+
+	std::string state;
+	packet >> state;
+
+	return state == "S";
+}
+
 std::optional<std::vector<std::string>> PacketManager::extract_search_response_packet(sf::Packet& packet) {
 	std::string type;
 	packet >> type;

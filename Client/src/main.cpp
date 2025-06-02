@@ -49,8 +49,6 @@ int main() {
 	bool password_c_rect_focused = false;
 	bool search_rect_focused = false;
 
-	std::vector<std::string> search_usernames;
-
 	while (main_window.isOpen()) {
 		while (const std::optional event = main_window.pollEvent()) {
 			if (event->is<sf::Event::Closed>())
@@ -117,7 +115,14 @@ int main() {
 							}
 						} else {
 							search_rect_focused = false;
-							isSearchState = false;
+						}
+					} 
+
+					if (isSearchState) {
+						auto selection = gui_manager.search_selection(mouseButtonPressed->position);
+						if (selection) {
+							client.create_new_chat(*selection);
+							isSearchState = false; // Move it somewhere else because it blocks the interface
 						}
 					}
 				}
@@ -170,7 +175,7 @@ int main() {
 						if (search_rect_focused) {
 							auto usernames = client.search_users(clpdata.search_term);
 							if (usernames) {
-								search_usernames = *usernames;
+								gui_manager.build_search_results(*usernames);
 								isSearchState = true;
 							}
 						}
@@ -188,7 +193,7 @@ int main() {
 		else if (isChatlistState) {
 			gui_manager.render_chatlist_page(client.getUser());
 			if (isSearchState)
-				gui_manager.render_search_results(search_usernames);
+				gui_manager.render_search_results();
 		}
 
 

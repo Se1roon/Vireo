@@ -100,6 +100,7 @@ namespace GUI {
 			LoginPage loginpage_data;
 			RegisterPage registerpage_data;
 			ChatListPage chatlistpage_data; 
+			std::vector<PHRectangle> search_results;
 
 			LoginPage build_login_page();
 			RegisterPage build_register_page();
@@ -114,6 +115,9 @@ namespace GUI {
 			std::optional<LoginPageAction> loginpage_action(sf::Vector2i mouse_position);
 			std::optional<RegisterPageAction> registerpage_action(sf::Vector2i mouse_position);
 			std::optional<ChatListPageAction> chatlistpage_action(sf::Vector2i mouse_position);
+			std::optional<std::string> search_selection(sf::Vector2i mouse_position);
+
+			void build_search_results(std::vector<std::string> usernames);
 
 			void lusername_enter_key(bool shift, sf::Keyboard::Key key);
 			void lpassword_enter_key(bool shift, sf::Keyboard::Key key);
@@ -132,7 +136,7 @@ namespace GUI {
 			void render_login_page();
 			void render_register_page();
 			void render_chatlist_page(User& user);
-			void render_search_results(std::vector<std::string> usernames);
+			void render_search_results();
 	};
 };
 

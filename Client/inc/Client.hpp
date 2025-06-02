@@ -29,6 +29,7 @@ class Client {
 		void send_register_request();
 		void send_new_message_request(std::string msg_content, Chat& chat);
 		void send_search_request(std::string search_term);
+		void send_new_chat_request(std::string username);
 
 		User receive_login_response(sf::Packet& packet);
 
@@ -44,6 +45,7 @@ class Client {
 		bool load_user(std::string username, std::string password);
 		bool load_user(std::string username, std::string email, std::string password, std::string password_conf);
 		void send_message(std::string content, Chat& chat);
+		void create_new_chat(std::string username);
 		
 		std::optional<std::vector<std::string>> search_users(std::string prefix);
 

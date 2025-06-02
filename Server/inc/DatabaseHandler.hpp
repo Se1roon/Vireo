@@ -30,6 +30,7 @@ class DatabaseHandler {
 		std::optional<User> fetch_user(std::string username);
 		std::vector<std::string> get_usernames(std::string prefix);
 		bool insert_user(User& user);
+		bool create_chat(std::string creator, std::string peer);
 
 		bsoncxx::document::value user_to_document(User& user);
 };

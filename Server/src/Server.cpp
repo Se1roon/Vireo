@@ -99,6 +99,21 @@ bool Server::handle_search_request(std::string search_term, sf::TcpSocket& clien
 	return false;
 }
 
+bool Server::handle_new_chat_request(std::string username, std::string peer, sf::TcpSocket& client_s) {
+	sf::Packet response_packet;
+
+	if (db_handler->create_chat(username, peer))
+		response_packet = packet_manager.create_new_chat_response_packet(true);
+	else
+		response_packet = packet_manager.create_new_chat_response_packet(false);
+
+	if (client_s.send(response_packet) == sf::Socket::Status::Done)
+		return true;
+
+	std::cout << "Error searching for users!\n";
+	return false;
+}
+
 
 void Server::handle_requests() {
 	if (selector.wait(sf::seconds(0.1f))) {
@@ -157,7 +172,17 @@ void Server::handle_requests() {
 							}
 						}
 					}
+					else if (request_type == "NH") {
+						std::cout << "New chat request!\n";
 
+						auto peer_username = packet_manager.extract_new_chat_packet(packet);
+						if (peer_username) {
+							if (!handle_new_chat_request(c->username, *peer_username, c->socket)) {
+								std::cout << "dupa\n";
+							}
+						}
+					}
+					
 					++c;
 				} else if (status == sf::Socket::Status::Disconnected) {
 					std::cout << "Client has disconnected!\n";
