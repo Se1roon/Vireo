@@ -47,7 +47,7 @@ class Server {
 		bool handle_login_request(LoginData& ldata, sf::TcpSocket& client_s);
 		bool handle_register_request(RegisterData& rdata, sf::TcpSocket& client_s);
 		bool handle_search_request(std::string search_term, sf::TcpSocket& client_s);
-		bool handle_new_chat_request(std::string username, std::string peer, sf::TcpSocket& client_s);
+		bool handle_new_chat_request(std::string username, std::string peer, sf::TcpSocket& client_s, sf::TcpSocket& peer_s);
 
 	public:
 		Server(int listen_port, std::string db_connection_s);

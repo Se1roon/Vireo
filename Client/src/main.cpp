@@ -32,6 +32,7 @@ int main() {
 	Client client({127, 0, 0, 1}, server_port);
 
 	sf::RenderWindow main_window(sf::VideoMode({client.window_width, client.window_height}), "Vireo");
+	main_window.setFramerateLimit(60);
 
 	sf::Font main_font("fonts/SourceSansPro-Regular.ttf");
 	sf::Font title_font("fonts/Inter-Regular.otf");
@@ -163,7 +164,6 @@ int main() {
 							// Render some message
 						} else {
 							if (client.load_user(rpdata.username, rpdata.email, rpdata.password, rpdata.password_conf)) {
-								std::cout << "Registered\n";
 								isLoginState = false;
 								isRegisterState = false;
 								isChatlistState = true;
@@ -173,16 +173,15 @@ int main() {
 						ChatListPageData clpdata = gui_manager.get_chatlistpage_data();
 
 						if (search_rect_focused) {
-							auto usernames = client.search_users(clpdata.search_term);
-							if (usernames) {
-								gui_manager.build_search_results(*usernames);
+							if (client.search_users(clpdata.search_term))
 								isSearchState = true;
-							}
 						}
 					}
 				}
 			}
 		}
+
+		client.handle_request(gui_manager);
 
 		main_window.clear({ MAIN_COLOR_R, MAIN_COLOR_G, MAIN_COLOR_B });
 

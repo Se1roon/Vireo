@@ -52,7 +52,7 @@ class PacketManager {
 		sf::Packet create_search_packet(std::string search_term);
 		sf::Packet create_search_response_packet(std::vector<std::string> usernames);
 		sf::Packet create_new_chat_packet(std::string username);
-		sf::Packet create_new_chat_response_packet(bool success);
+		sf::Packet create_new_chat_response_packet(Chat& chat);
 
 		std::optional<LoginData> extract_login_packet(sf::Packet& packet);
 		std::optional<ResponseLoginData> extract_login_response_packet(sf::Packet& packet);
@@ -62,6 +62,6 @@ class PacketManager {
 		std::optional<std::string> extract_search_packet(sf::Packet& packet);
 		std::optional<std::vector<std::string>> extract_search_response_packet(sf::Packet& packet);
 		std::optional<std::string> extract_new_chat_packet(sf::Packet& packet);
-		bool extract_new_chat_response_packet(sf::Packet& packet);
+		Chat extract_new_chat_response_packet(sf::Packet& packet);
 };
 

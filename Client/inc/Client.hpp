@@ -10,6 +10,7 @@
 #include <SFML/Network.hpp>
 
 #include "User.hpp"
+#include "GUIManager.hpp"
 #include "PacketManager.hpp"
 #include "Chat.hpp"
 
@@ -41,13 +42,15 @@ class Client {
 		~Client();
 
 		User& getUser();
+
+		void handle_request(GUI::GUIManager& gui_manager);
 		
 		bool load_user(std::string username, std::string password);
 		bool load_user(std::string username, std::string email, std::string password, std::string password_conf);
 		void send_message(std::string content, Chat& chat);
 		void create_new_chat(std::string username);
 		
-		std::optional<std::vector<std::string>> search_users(std::string prefix);
+		bool search_users(std::string prefix);
 
 		void render_hello_message();
 		std::optional<Chat> render_chat_list();

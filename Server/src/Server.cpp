@@ -99,19 +99,30 @@ bool Server::handle_search_request(std::string search_term, sf::TcpSocket& clien
 	return false;
 }
 
-bool Server::handle_new_chat_request(std::string username, std::string peer, sf::TcpSocket& client_s) {
+bool Server::handle_new_chat_request(std::string username, std::string peer, sf::TcpSocket& client_s, sf::TcpSocket& peer_s) {
 	sf::Packet response_packet;
 
-	if (db_handler->create_chat(username, peer))
-		response_packet = packet_manager.create_new_chat_response_packet(true);
-	else
-		response_packet = packet_manager.create_new_chat_response_packet(false);
+	if (db_handler->create_chat(username, peer)) {
+		std::vector<std::string> members = { username, peer };
+		std::vector<Message> messages;
 
-	if (client_s.send(response_packet) == sf::Socket::Status::Done)
-		return true;
+		Chat new_chat(username + " & " + peer, members, messages);
 
-	std::cout << "Error searching for users!\n";
-	return false;
+		std::cout << "Inserted new chat [" << new_chat.getName() << "] into the database\n";
+
+		response_packet = packet_manager.create_new_chat_response_packet(new_chat);
+	}
+	else {
+		// Handle db chat insertion error
+		std::cout << "Unable to insert new chat!\n";
+	}
+
+	if (client_s.send(response_packet) != sf::Socket::Status::Done) return false;
+	if (peer_s.send(response_packet) != sf::Socket::Status::Done) {
+		std::cout << "Unable to send information to peer, might be offline\n";
+	}
+
+	return true;
 }
 
 
@@ -177,7 +188,13 @@ void Server::handle_requests() {
 
 						auto peer_username = packet_manager.extract_new_chat_packet(packet);
 						if (peer_username) {
-							if (!handle_new_chat_request(c->username, *peer_username, c->socket)) {
+							sf::TcpSocket peer_socket;
+							for (auto peer = clients.begin(); peer != clients.end(); peer++) {
+								std::cout << "Exec\n";
+								if (peer->username == peer_username) peer_socket = std::move(peer->socket);
+							}
+
+							if (!handle_new_chat_request(c->username, *peer_username, c->socket, peer_socket)) {
 								std::cout << "dupa\n";
 							}
 						}

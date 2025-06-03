@@ -22,6 +22,8 @@ Client::Client(sf::IpAddress s_addr, unsigned int s_port) {
 	sf::Socket::Status status = server_socket.connect(s_addr, s_port);
 	if (status != sf::Socket::Status::Done)
 		throw ClientException("Unable to contact the Server.");
+
+	server_socket.setBlocking(false);
 }
 
 Client::~Client() {
@@ -77,34 +79,49 @@ User Client::receive_login_response(sf::Packet& packet) {
 	return user;
 }
 
+
+void Client::handle_request(GUI::GUIManager& gui_manager) {
+	sf::Packet incoming_packet;
+	if (server_socket.receive(incoming_packet) == sf::Socket::Status::Done) {
+		std::string packet_type;
+		incoming_packet >> packet_type;
+		
+		if (packet_type == "LR") {
+			user = std::make_unique<User>(receive_login_response(incoming_packet));
+		} else if (packet_type == "RR") {
+			if (!packet_manager.extract_register_response_packet(incoming_packet))
+				std::cout << "Unable to register!\n";
+			else std::cout << "Successfully registered!\n";
+		} else if (packet_type == "SR") {
+			auto usernames = packet_manager.extract_search_response_packet(incoming_packet);
+			if (usernames)
+				gui_manager.build_search_results(*usernames);
+		} else if (packet_type == "NHR") {
+			Chat new_chat = packet_manager.extract_new_chat_response_packet(incoming_packet);
+			user->joinChat(new_chat);
+		} else {
+			std::cout << "Unknown packet type!\n";
+		}
+	}
+
+	return;
+}
+
+
 void Client::send_message(std::string content, Chat& chat) {
 	send_new_message_request(content, chat);
 }
 
 
-std::optional<std::vector<std::string>> Client::search_users(std::string prefix) {
+bool Client::search_users(std::string prefix) {
 	send_search_request(prefix);
-
-	sf::Packet response_packet;
-	if (server_socket.receive(response_packet) != sf::Socket::Status::Done)
-		return std::nullopt;
-
-	auto usernames = packet_manager.extract_search_response_packet(response_packet);
-	if (usernames)
-		return *usernames;
-
-	return std::nullopt;
+	return true;
 }
 
 bool Client::load_user(std::string username, std::string password) {
 	user = std::make_unique<User>(username, password, "");
 	send_login_request();
 
-	sf::Packet response_packet;
-	if (server_socket.receive(response_packet) != sf::Socket::Status::Done)
-		return false;
-
-	user = std::make_unique<User>(receive_login_response(response_packet));
 	return true;
 }
 
@@ -112,33 +129,11 @@ bool Client::load_user(std::string username, std::string email, std::string pass
 	user = std::make_unique<User>(username, password, email);
 	send_register_request();
 
-	sf::Packet response_packet;
-	if (server_socket.receive(response_packet) != sf::Socket::Status::Done)
-		return false;
-
-	return packet_manager.extract_register_response_packet(response_packet);
+	return true;
 }
 
 void Client::create_new_chat(std::string username) {
-	std::vector<std::string> members = { user->getUsername(), username };
-	std::vector<Message> messages;
-
-	Chat new_chat(user->getUsername() + " & " + username, members, messages);
-
 	send_new_chat_request(username);
 	
-	std::cout << "This blocs?\n";
-	sf::Packet response_packet;
-	if (server_socket.receive(response_packet) != sf::Socket::Status::Done) {
-		std::cout << "error\n";
-		return;
-	}
-
-	if (packet_manager.extract_new_chat_response_packet(response_packet)) {
-		std::cout << "Success - joining new chat!\n";
-		user->joinChat(new_chat);
-	}
-	else std::cout << "err\n";
-
 	return;
 }

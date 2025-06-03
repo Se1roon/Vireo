@@ -106,32 +106,38 @@ std::optional<std::string> PacketManager::extract_new_chat_packet(sf::Packet& pa
 	return username;
 }
 
-sf::Packet PacketManager::create_new_chat_response_packet(bool success) {
+sf::Packet PacketManager::create_new_chat_response_packet(Chat& chat) {
 	sf::Packet packet;
-	packet << "NHR";
-	if (success) packet << "S";
-	else packet << "F";
+	packet << "NHR" << chat.getName();
+
+	packet << chat.getMembers().size();
+	for (std::string member : chat.getMembers())
+		packet << member;
 
 	return packet;
 }
 
-bool PacketManager::extract_new_chat_response_packet(sf::Packet& packet) {
-	std::string type;
-	packet >> type;
-	if (type != "NHR") return false;
+Chat PacketManager::extract_new_chat_response_packet(sf::Packet& packet) {
+	std::string chat_name;
+	packet >> chat_name;
 
-	std::string state;
-	packet >> state;
+	int members_count;
+	packet >> members_count;
 
-	return state == "S";
+	std::vector<std::string> members;
+	for (int i = 0; i < members_count; i++) {
+		std::string username;
+		packet >> username;
+		members.push_back(username);
+	}
+
+	std::vector<Message> messages;
+	Chat new_chat(chat_name, members, messages);
+
+	return new_chat;
 }
 
 std::optional<std::vector<std::string>> PacketManager::extract_search_response_packet(sf::Packet& packet) {
-	std::string type;
-	packet >> type;
-	if (type != "SR")
-		return std::nullopt;
-
 	int count = 0;
 	packet >> count;
 
@@ -154,13 +160,6 @@ std::optional<std::string> PacketManager::extract_search_packet(sf::Packet& pack
 
 
 bool PacketManager::extract_register_response_packet(sf::Packet& packet) {
-	std::string type;
-	packet >> type;
-	if (type != "RR") {
-		std::cout << "Invalid packet type!\n";
-		return false;
-	}
-
 	std::string status;
 	packet >> status;
 
@@ -193,13 +192,6 @@ std::optional<NewMessageData> PacketManager::extract_new_message_packet(sf::Pack
 }
 
 std::optional<ResponseLoginData> PacketManager::extract_login_response_packet(sf::Packet& packet) {
-	std::string type;
-	packet >> type;
-	if (type != "LR") {
-		std::cout << "Invalid packet type!\n";
-		return std::nullopt;
-	}
-
 	ResponseLoginData lrdata;
 
 	packet >> lrdata.username >> lrdata.email >> lrdata.password;
