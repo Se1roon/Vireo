@@ -5,6 +5,7 @@
 
 #include <string>
 #include <vector>
+#include <optional>
 
 #include <SFML/Network.hpp>
 
@@ -29,6 +30,7 @@ class User {
 		std::string getPassword();
 		std::string getEmail();
 		std::vector<Chat> getChats();
+		Chat& getChat(std::string chat_name);
 
 		void setUsername(std::string username);
 		void setPassword(std::string password);

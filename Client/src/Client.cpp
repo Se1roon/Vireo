@@ -49,7 +49,7 @@ void Client::send_register_request() {
 }
 
 void Client::send_new_message_request(std::string msg_content, Chat& chat) {
-	sf::Packet nmpacket = packet_manager.create_new_message_packet(msg_content, chat);
+	sf::Packet nmpacket = packet_manager.create_new_message_packet(user->getUsername(), msg_content, chat);
 	if (server_socket.send(nmpacket) != sf::Socket::Status::Done)
 		throw ClientException("Unable to send new message to the server!\n");
 }
@@ -99,6 +99,12 @@ void Client::handle_request(GUI::GUIManager& gui_manager) {
 		} else if (packet_type == "NHR") {
 			Chat new_chat = packet_manager.extract_new_chat_response_packet(incoming_packet);
 			user->joinChat(new_chat);
+			gui_manager.build_chat_rects(*user);
+		} else if (packet_type == "NMR") {
+			std::pair<Message, std::string> new_msg = packet_manager.extract_new_message_response_packet(incoming_packet);
+			Chat& chat = user->getChat(new_msg.second);
+			chat.addMessage(new_msg.first);
+			gui_manager.build_chat_messages(chat);
 		} else {
 			std::cout << "Unknown packet type!\n";
 		}

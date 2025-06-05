@@ -31,6 +31,7 @@ class DatabaseHandler {
 		std::vector<std::string> get_usernames(std::string prefix);
 		bool insert_user(User& user);
 		bool create_chat(std::string creator, std::string peer);
+		bool insert_message(std::string author, std::string content, std::string chat_name);
 
 		bsoncxx::document::value user_to_document(User& user);
 };

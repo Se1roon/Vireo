@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <optional>
+#include <utility>
 
 #include <SFML/Network.hpp>
 
@@ -167,29 +168,50 @@ bool PacketManager::extract_register_response_packet(sf::Packet& packet) {
 }
 
 
-sf::Packet PacketManager::create_new_message_packet(std::string content, Chat& chat) {
+sf::Packet PacketManager::create_new_message_packet(std::string author, std::string content, Chat& chat) {
 	sf::Packet packet;
 
-	packet << "NM" << chat.getName() << content; // the server will know how sent it
+	packet << "NM" << chat.getName() << author << content;
+
+	if (chat.getMembers()[0] == author)
+		packet << chat.getMembers()[1];
+	else
+		packet << chat.getMembers()[0];
 	
 	return packet;
 }
 
 std::optional<NewMessageData> PacketManager::extract_new_message_packet(sf::Packet& packet) {
-	/*
-	std::string type;
-	packet >> type;
-	if (type != "NM") {
-		std::cout << "Invalid packet type\n";
-		return std::nullopt;
-	}
-	*/
-
 	NewMessageData nmdata;
-	packet >> nmdata.chat_name >> nmdata.msg_content;
+
+	packet >> nmdata.chat_name >> nmdata.msg_author >> nmdata.msg_content >> nmdata.peer_username;
 
 	return nmdata;
 }
+
+
+sf::Packet PacketManager::create_new_message_response_packet(std::string chat_name, Message& message) {
+	sf::Packet packet;
+
+	packet << "NMR" << message.getAuthor() << message.getContent() << chat_name;
+
+	return packet;
+}
+
+std::pair<Message, std::string> PacketManager::extract_new_message_response_packet(sf::Packet& packet) {
+	std::string author;
+	std::string content;
+
+	packet >> author >> content;
+
+	Message message(content, author);
+
+	std::string chat_name;
+	packet >> chat_name;
+
+	return {message, chat_name};
+}
+
 
 std::optional<ResponseLoginData> PacketManager::extract_login_response_packet(sf::Packet& packet) {
 	ResponseLoginData lrdata;

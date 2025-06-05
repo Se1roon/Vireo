@@ -6,6 +6,7 @@
 #include <optional>
 
 #include <SFML/Network.hpp>
+#include <SFML/Network/IpAddress.hpp>
 
 #include <mongocxx/instance.hpp>
 #include <mongocxx/client.hpp>
@@ -117,10 +118,30 @@ bool Server::handle_new_chat_request(std::string username, std::string peer, sf:
 		std::cout << "Unable to insert new chat!\n";
 	}
 
+	// TODO: After sending data to both caller and peer it freezes
+
 	if (client_s.send(response_packet) != sf::Socket::Status::Done) return false;
 	if (peer_s.send(response_packet) != sf::Socket::Status::Done) {
 		std::cout << "Unable to send information to peer, might be offline\n";
 	}
+
+	std::cout << "Sent chat update info!\n";
+
+	return true;
+}
+
+bool Server::handle_new_messsage_request(NewMessageData& nmdata, sf::TcpSocket& client_s, sf::TcpSocket& peer_s) {
+	sf::Packet response_packet;
+
+	Message msg(nmdata.msg_content, nmdata.msg_author);
+
+	if (db_handler->insert_message(nmdata.msg_author, nmdata.msg_content, nmdata.chat_name)) {
+		response_packet = packet_manager.create_new_message_response_packet(nmdata.chat_name, msg);
+	}
+
+	if (client_s.send(response_packet) != sf::Socket::Status::Done) return false;
+	if (peer_s.send(response_packet) != sf::Socket::Status::Done)
+		std::cout << "Unable to send information to peer, might be offline\n";
 
 	return true;
 }
@@ -170,8 +191,16 @@ void Server::handle_requests() {
 						std::cout << "New Message came";
 						
 						auto nmdata = packet_manager.extract_new_message_packet(packet);
-						if (nmdata) 
-							std::cout << "\"" << nmdata->msg_content << "\" in [" << nmdata->chat_name << "]\n";
+						if (nmdata) {
+							sf::TcpSocket* peer_socket;
+							for (auto peer = clients.begin(); peer != clients.end(); peer++) {
+								if (peer->username == nmdata->peer_username) peer_socket = &peer->socket;
+							}
+
+							if (!handle_new_messsage_request(*nmdata, c->socket, *peer_socket)) {
+								std::cout << "?\n";
+							}
+						}
 					}
 					else if (request_type == "S") {
 						std::cout << "Search request\n";
@@ -188,15 +217,15 @@ void Server::handle_requests() {
 
 						auto peer_username = packet_manager.extract_new_chat_packet(packet);
 						if (peer_username) {
-							sf::TcpSocket peer_socket;
+							sf::TcpSocket* peer_socket;
 							for (auto peer = clients.begin(); peer != clients.end(); peer++) {
-								std::cout << "Exec\n";
-								if (peer->username == peer_username) peer_socket = std::move(peer->socket);
+								if (peer->username == peer_username) peer_socket = &peer->socket;
 							}
 
-							if (!handle_new_chat_request(c->username, *peer_username, c->socket, peer_socket)) {
+							if (!handle_new_chat_request(c->username, *peer_username, c->socket, *peer_socket)) {
 								std::cout << "dupa\n";
 							}
+							std::cout << "Chat request handled!\n";
 						}
 					}
 					

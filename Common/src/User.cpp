@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <optional>
 
 #include <SFML/Network.hpp>
 
@@ -51,6 +52,12 @@ std::string User::getEmail() {
 
 std::vector<Chat> User::getChats() {
 	return chats;
+}
+
+Chat& User::getChat(std::string chat_name) {
+	for (auto& chat : chats)
+		if (chat.getName() == chat_name)
+			return chat;
 }
 
 

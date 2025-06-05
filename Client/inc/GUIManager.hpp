@@ -80,14 +80,33 @@ namespace GUI {
 		std::unique_ptr<PHRectangle> search_rect;
 		std::unique_ptr<sf::RectangleShape> search_line;
 		std::unique_ptr<sf::RectangleShape> chats_rect;
+		std::vector<PHRectangle> chats;
 	};
 
 	struct ChatListPageData {
 		std::string search_term;
 	};
 
-	enum ChatListPageAction {
-		CLSEARCH
+	struct ChatListPageAction {
+		bool search;
+		bool clicked_outside_list;
+		std::string chat_name;
+	};
+
+
+	struct ChatPage {
+		std::unique_ptr<sf::RectangleShape> messages_wrapper;
+		std::unique_ptr<PHRectangle> new_message_rect;
+
+		/* I made message very simplistic it will be just a rect with placeholder text author said: message
+		 * I could create another class like PHMessageBox but I don't have time :(
+		 */
+		std::vector<PHRectangle> messages;
+	};
+
+	struct ChatPageData {
+		std::string author;
+		std::string content;
 	};
 
 
@@ -100,6 +119,7 @@ namespace GUI {
 			LoginPage loginpage_data;
 			RegisterPage registerpage_data;
 			ChatListPage chatlistpage_data; 
+			ChatPage chatpage_data;
 			std::vector<PHRectangle> search_results;
 
 			LoginPage build_login_page();
@@ -114,10 +134,14 @@ namespace GUI {
 
 			std::optional<LoginPageAction> loginpage_action(sf::Vector2i mouse_position);
 			std::optional<RegisterPageAction> registerpage_action(sf::Vector2i mouse_position);
-			std::optional<ChatListPageAction> chatlistpage_action(sf::Vector2i mouse_position);
+			ChatListPageAction chatlistpage_action(sf::Vector2i mouse_position);
 			std::optional<std::string> search_selection(sf::Vector2i mouse_position);
 
+			bool chatpage_new_msg(sf::Vector2i mouse_position);
+
 			void build_search_results(std::vector<std::string> usernames);
+			bool build_chat_rects(User& user);
+			void build_chat_messages(Chat& chat);
 
 			void lusername_enter_key(bool shift, sf::Keyboard::Key key);
 			void lpassword_enter_key(bool shift, sf::Keyboard::Key key);
@@ -129,14 +153,18 @@ namespace GUI {
 
 			void search_enter_key(bool shift, sf::Keyboard::Key key);
 
+			void new_msg_enter_key(bool shift, sf::Keyboard::Key key);
+
 			LoginPageData get_loginpage_data();
 			RegisterPageData get_registerpage_data();
 			ChatListPageData get_chatlistpage_data();
+			ChatPageData get_chatpage_data(std::string username);
 
 			void render_login_page();
 			void render_register_page();
-			void render_chatlist_page(User& user);
+			void render_chatlist_page(/*User& user*/);
 			void render_search_results();
+			void render_chat_page();
 	};
 };
 

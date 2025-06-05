@@ -6,6 +6,7 @@
 #include <string>
 #include <optional>
 #include <vector>
+#include <utility>
 
 #include <SFML/Network.hpp>
 
@@ -33,7 +34,9 @@ struct ResponseLoginData {
 
 struct NewMessageData {
 	std::string chat_name;
+	std::string msg_author;
 	std::string msg_content;
+	std::string peer_username;
 };
 
 
@@ -48,17 +51,19 @@ class PacketManager {
 		sf::Packet create_login_response_packet(User& user);
 		sf::Packet create_register_packet(User& user);
 		sf::Packet create_register_response_packet(bool success);
-		sf::Packet create_new_message_packet(std::string content, Chat& chat);
 		sf::Packet create_search_packet(std::string search_term);
 		sf::Packet create_search_response_packet(std::vector<std::string> usernames);
 		sf::Packet create_new_chat_packet(std::string username);
 		sf::Packet create_new_chat_response_packet(Chat& chat);
+		sf::Packet create_new_message_packet(std::string author, std::string content, Chat& chat);
+		sf::Packet create_new_message_response_packet(std::string chat_name, Message& message);
 
 		std::optional<LoginData> extract_login_packet(sf::Packet& packet);
 		std::optional<ResponseLoginData> extract_login_response_packet(sf::Packet& packet);
 		std::optional<RegisterData> extract_register_packet(sf::Packet& packet);
 		bool extract_register_response_packet(sf::Packet& packet);
 		std::optional<NewMessageData> extract_new_message_packet(sf::Packet& packet);
+		std::pair<Message, std::string> extract_new_message_response_packet(sf::Packet& packet);
 		std::optional<std::string> extract_search_packet(sf::Packet& packet);
 		std::optional<std::vector<std::string>> extract_search_response_packet(sf::Packet& packet);
 		std::optional<std::string> extract_new_chat_packet(sf::Packet& packet);

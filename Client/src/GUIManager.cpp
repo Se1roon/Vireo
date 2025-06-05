@@ -55,7 +55,8 @@ static const std::unordered_map<sf::Keyboard::Key, std::string> skey_map = {
 	{ sf::Keyboard::Key::Num7, "7" },
 	{ sf::Keyboard::Key::Num8, "8" },
 	{ sf::Keyboard::Key::Num9, "9" },
-	{ sf::Keyboard::Key::Period, "." }
+	{ sf::Keyboard::Key::Period, "." },
+	{ sf::Keyboard::Key::Space, " "}
 };
 
 
@@ -168,6 +169,50 @@ void GUIManager::build_search_results(std::vector<std::string> usernames) {
 	}
 }
 
+bool GUIManager::build_chat_rects(User& user) {
+	int i = 0;
+	for (Chat& chat : user.getChats()) {
+		PHRectangle chat_rect(main_font, chat.getName(), 32);
+
+		chat_rect.setSize({ chatlistpage_data.chats_rect->getSize().x, 60.f });
+		chat_rect.setPosition({ 0, chatlistpage_data.chats_rect->getPosition().y + 60.f * i++ });
+		chat_rect.setBgColor({ MAIN_COLOR_R, MAIN_COLOR_G, MAIN_COLOR_B });
+		chat_rect.setFgColor({ ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B });
+
+		chatlistpage_data.chats.push_back(std::move(chat_rect));
+	}
+
+	return i > 0;
+}
+
+void GUIManager::build_chat_messages(Chat& chat) {
+	ChatPage cp;
+
+	cp.new_message_rect = std::make_unique<PHRectangle>(main_font, "Type...", 24);
+	cp.new_message_rect->setSize({ window.getSize().x - chatlistpage_data.chats_rect->getSize().x - 40.f, 50.f });
+	cp.new_message_rect->setPosition({ chatlistpage_data.chats_rect->getPosition().x + chatlistpage_data.chats_rect->getSize().x + 20.f, window.getSize().y - 60.f });
+
+	cp.messages_wrapper = std::make_unique<sf::RectangleShape>();
+	cp.messages_wrapper->setFillColor({ MAIN_COLOR_R, MAIN_COLOR_G, MAIN_COLOR_B });
+	cp.messages_wrapper->setPosition({ chatlistpage_data.chats_rect->getPosition().x + chatlistpage_data.chats_rect->getSize().x + 4.f, chatlistpage_data.chats_rect->getPosition().y + 2.f });
+	cp.messages_wrapper->setSize({ window.getSize().x - chatlistpage_data.chats_rect->getSize().x, window.getSize().y - chatlistpage_data.search_rect->getSize().y - 120.f });
+
+	int i = 0;
+	for (Message& msg : chat.getMessages()) {
+		std::cout << "Rendering message [" << msg.getAuthor() << ": " << msg.getContent() << "]\n";
+		PHRectangle msg_box(main_font, msg.getAuthor() + " said \"" + msg.getContent() + "\"", 28);
+		
+		msg_box.setFgColor({ ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B });
+		msg_box.setSize({ cp.messages_wrapper->getSize().x - 40.f, 50.f });
+		msg_box.setPosition({ cp.messages_wrapper->getPosition().x + 20.f, cp.messages_wrapper->getPosition().y + 20.f + i++ * 70.f });
+
+		cp.messages.push_back(std::move(msg_box));
+	}
+	std::cout << "\n\n";
+
+	chatpage_data = std::move(cp);
+}
+
 
 std::optional<LoginPageAction> GUIManager::loginpage_action(sf::Vector2i mouse_position) {
 	if (loginpage_data.prompt->hasBeenClicked(mouse_position))
@@ -201,11 +246,32 @@ std::optional<RegisterPageAction> GUIManager::registerpage_action(sf::Vector2i m
 	return std::nullopt;
 }
 
-std::optional<ChatListPageAction> GUIManager::chatlistpage_action(sf::Vector2i mouse_position) {
-	if (chatlistpage_data.search_rect->hasBeenClicked(mouse_position))
-		return CLSEARCH;
+ChatListPageAction GUIManager::chatlistpage_action(sf::Vector2i mouse_position) {
+	ChatListPageAction cpaction;
+	cpaction.chat_name = "";
+	cpaction.search = false;
+	cpaction.clicked_outside_list = false;
 
-	return std::nullopt;
+	if (chatlistpage_data.search_rect->hasBeenClicked(mouse_position))
+		cpaction.search = true;
+
+	sf::Vector2f chats_pos = chatlistpage_data.chats_rect->getPosition();
+	sf::Vector2f chats_size = chatlistpage_data.chats_rect->getSize();
+	if ((mouse_position.x >= chats_pos.x && mouse_position.x <= chats_pos.x + chats_size.x &&
+		mouse_position.y >= chats_pos.y && mouse_position.y <= chats_pos.y + chats_size.y )) {
+		cpaction.clicked_outside_list = true;
+	}
+
+
+	for (auto& chat : chatlistpage_data.chats)
+		if (chat.hasBeenClicked(mouse_position))
+			cpaction.chat_name = chat.getPlaceholderText();
+
+	return cpaction;
+}
+
+bool GUIManager::chatpage_new_msg(sf::Vector2i mouse_position) {
+	return chatpage_data.new_message_rect->hasBeenClicked(mouse_position);
 }
 
 std::optional<std::string> GUIManager::search_selection(sf::Vector2i mouse_position) {
@@ -309,6 +375,18 @@ void GUIManager::search_enter_key(bool shift, sf::Keyboard::Key key) {
 	chatlistpage_data.search_rect->setPlaceholder(current_text);
 }
 
+void GUIManager::new_msg_enter_key(bool shift, sf::Keyboard::Key key) {
+	std::string current_text = chatpage_data.new_message_rect->getPlaceholderText();
+	if (key == sf::Keyboard::Key::Backspace && current_text.length() > 0)
+		current_text.pop_back();
+	else if (shift)
+		current_text.append(key_to_str(key));
+	else if (!shift)
+		current_text.append(str_to_lower(key_to_str(key)));
+
+	chatpage_data.new_message_rect->setPlaceholder(current_text);
+}
+
 
 LoginPageData GUIManager::get_loginpage_data() {
 	LoginPageData lpdata;
@@ -338,6 +416,15 @@ ChatListPageData GUIManager::get_chatlistpage_data() {
 	return clpdata;
 }
 
+ChatPageData GUIManager::get_chatpage_data(std::string username) {
+	ChatPageData cpdata;
+
+	cpdata.author = username;
+	cpdata.content = chatpage_data.new_message_rect->getPlaceholderText();
+
+	return cpdata;
+}
+
 
 void GUIManager::render_login_page() {
 	loginpage_data.title->render(window);
@@ -355,23 +442,24 @@ void GUIManager::render_register_page() {
 	registerpage_data.prompt->render(window);
 }
 
-void GUIManager::render_chatlist_page(User& user) {
+void GUIManager::render_chatlist_page(/*User& user*/) {
 	chatlistpage_data.search_rect->render(window);
 	window.draw(*chatlistpage_data.search_line);
 	window.draw(*chatlistpage_data.chats_rect);
 
-	int i = 0;
-	for (Chat& chat : user.getChats()) {
-		PHRectangle chat_rect(main_font, chat.getName(), 32);
-
-		chat_rect.setSize({ chatlistpage_data.chats_rect->getSize().x, 60.f });
-		chat_rect.setPosition({ 0, chatlistpage_data.chats_rect->getPosition().y + 60.f * i++ });
-		chat_rect.setBgColor({ MAIN_COLOR_R, MAIN_COLOR_G, MAIN_COLOR_B });
-		chat_rect.setFgColor({ ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B });
-
-		chat_rect.render(window);
+	for (auto& chat : chatlistpage_data.chats) {
+		chat.render(window);
 	}
 }
+
+void GUIManager::render_chat_page() {
+	chatpage_data.new_message_rect->render(window);
+
+	for (PHRectangle& msg_rect : chatpage_data.messages) {
+		msg_rect.render(window);
+	}
+}
+
 
 void GUIManager::render_search_results() {
 	for (PHRectangle& r : search_results)

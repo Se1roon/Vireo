@@ -32,7 +32,7 @@ int main() {
 	Client client({127, 0, 0, 1}, server_port);
 
 	sf::RenderWindow main_window(sf::VideoMode({client.window_width, client.window_height}), "Vireo");
-	main_window.setFramerateLimit(60);
+	main_window.setFramerateLimit(30);
 
 	sf::Font main_font("fonts/SourceSansPro-Regular.ttf");
 	sf::Font title_font("fonts/Inter-Regular.otf");
@@ -49,6 +49,12 @@ int main() {
 	bool email_rect_focused = false;
 	bool password_c_rect_focused = false;
 	bool search_rect_focused = false;
+	bool new_msg_rect_focused = false;
+
+	bool chat_entered = false;
+	bool stop_rendering_chat_rects = false;
+
+	std::string current_chat = "";
 
 	while (main_window.isOpen()) {
 		while (const std::optional event = main_window.pollEvent()) {
@@ -109,22 +115,35 @@ int main() {
 							password_c_rect_focused = false;
 						}
 					} else if (isChatlistState) {
-						auto action = gui_manager.chatlistpage_action(mouseButtonPressed->position);
-						if (action) {
-							if (*action == CLSEARCH) {
-								search_rect_focused = true;
-							}
-						} else {
+						ChatListPageAction action = gui_manager.chatlistpage_action(mouseButtonPressed->position);
+						if (action.search) {
+							search_rect_focused = true;
+						} else  {
 							search_rect_focused = false;
 						}
+
+						if (action.chat_name != "") {
+							gui_manager.build_chat_messages(client.getUser().getChat(action.chat_name));
+							chat_entered = true;
+							current_chat = client.getUser().getChat(action.chat_name).getName();
+						} else if (action.clicked_outside_list)
+							chat_entered = false;
 					} 
+
+					if (chat_entered) {
+						if (gui_manager.chatpage_new_msg(mouseButtonPressed->position))
+							new_msg_rect_focused = true;
+						else
+							new_msg_rect_focused = false;
+					}
 
 					if (isSearchState) {
 						auto selection = gui_manager.search_selection(mouseButtonPressed->position);
 						if (selection) {
 							client.create_new_chat(*selection);
 							isSearchState = false; // Move it somewhere else because it blocks the interface
-						}
+						} else 
+							isSearchState = false;
 					}
 				}
 			}
@@ -146,6 +165,9 @@ int main() {
 
 				if (isChatlistState && search_rect_focused)
 					gui_manager.search_enter_key(keyPressed->shift, keyPressed->code);
+
+				if (chat_entered && new_msg_rect_focused)
+					gui_manager.new_msg_enter_key(keyPressed->shift, keyPressed->code);
 
 				if (keyPressed->code == sf::Keyboard::Key::Enter) {
 					if (isLoginState) {
@@ -176,6 +198,11 @@ int main() {
 							if (client.search_users(clpdata.search_term))
 								isSearchState = true;
 						}
+
+						if (new_msg_rect_focused) {
+							ChatPageData cpdata = gui_manager.get_chatpage_data(client.getUser().getUsername());
+							client.send_message(cpdata.content, client.getUser().getChat(current_chat));
+						}
 					}
 				}
 			}
@@ -190,7 +217,13 @@ int main() {
 		else if (isRegisterState)
 			gui_manager.render_register_page();
 		else if (isChatlistState) {
-			gui_manager.render_chatlist_page(client.getUser());
+			if (!stop_rendering_chat_rects && gui_manager.build_chat_rects(client.getUser())) // to prevent BIG trouble with memory usage
+				stop_rendering_chat_rects = true;
+
+			gui_manager.render_chatlist_page();
+
+			if (chat_entered)
+				gui_manager.render_chat_page();
 			if (isSearchState)
 				gui_manager.render_search_results();
 		}

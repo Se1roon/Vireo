@@ -8,6 +8,8 @@
 
 #include <bsoncxx/builder/basic/document.hpp>
 #include <bsoncxx/builder/basic/array.hpp>
+#include <bsoncxx/builder/stream/document.hpp>
+#include <bsoncxx/builder/stream/array.hpp>
 #include <bsoncxx/types.hpp>
 #include <bsoncxx/json.hpp>
 #include <mongocxx/uri.hpp>
@@ -106,6 +108,38 @@ bool DatabaseHandler::insert_user(User& user) {
 		return true;
 	}
 	return false;
+}
+
+bool DatabaseHandler::insert_message(std::string author, std::string content, std::string chat_name) {
+	// Get a chat
+	// Insert a message
+	
+	auto chats_col = (*client)["Vireo"]["Chats"];
+
+	bsoncxx::builder::stream::document filter_builder;
+	filter_builder << "name" << chat_name;
+	bsoncxx::document::value filter_doc = filter_builder << bsoncxx::builder::stream::finalize;
+
+	bsoncxx::builder::stream::document update_builder;
+	update_builder << "$push"
+				   << bsoncxx::builder::stream::open_document
+						<< "messages"
+						<< bsoncxx::builder::stream::open_document
+							<< "author" << author
+							<< "content" << content
+						<< bsoncxx::builder::stream::close_document
+					<< bsoncxx::builder::stream::close_document;
+
+	bsoncxx::document::value update_doc = update_builder << bsoncxx::builder::stream::finalize;
+
+	auto result = chats_col.update_one(filter_doc.view(), update_doc.view());
+	if (!result) {
+		std::cout << "ERROR while inserting message!\n";
+		return false;
+	}
+
+	return true;
+
 }
 
 bsoncxx::document::value DatabaseHandler::user_to_document(User& user) {
