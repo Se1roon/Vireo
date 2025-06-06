@@ -62,13 +62,11 @@ Chat& User::getChat(std::string chat_name) {
 
 
 void User::joinChat(Chat& chat) {
-	std::cout << "Joining chat\n";
-
 	chats.push_back(chat);
 }
 
 void User::leaveChat(Chat& chat) {
-	std::cout << "Leaving chat\n";
+	std::cout << "INFO: Leaving chat not implemented!\n";
 }
 
 

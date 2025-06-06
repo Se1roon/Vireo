@@ -199,7 +199,6 @@ void GUIManager::build_chat_messages(Chat& chat) {
 
 	int i = 0;
 	for (Message& msg : chat.getMessages()) {
-		std::cout << "Rendering message [" << msg.getAuthor() << ": " << msg.getContent() << "]\n";
 		PHRectangle msg_box(main_font, msg.getAuthor() + " said \"" + msg.getContent() + "\"", 28);
 		
 		msg_box.setFgColor({ ACCENT_COLOR_R, ACCENT_COLOR_G, ACCENT_COLOR_B });
@@ -208,7 +207,6 @@ void GUIManager::build_chat_messages(Chat& chat) {
 
 		cp.messages.push_back(std::move(msg_box));
 	}
-	std::cout << "\n\n";
 
 	chatpage_data = std::move(cp);
 }
@@ -275,10 +273,8 @@ bool GUIManager::chatpage_new_msg(sf::Vector2i mouse_position) {
 }
 
 std::optional<std::string> GUIManager::search_selection(sf::Vector2i mouse_position) {
-	for (PHRectangle& rect : search_results) {
-		std::cout << "Checking if [" << rect.getPlaceholderText() << "] has been clicked!\n";
+	for (PHRectangle& rect : search_results)
 		if (rect.hasBeenClicked(mouse_position)) return rect.getPlaceholderText();
-	}
 
 	return std::nullopt;
 }
@@ -455,9 +451,8 @@ void GUIManager::render_chatlist_page(/*User& user*/) {
 void GUIManager::render_chat_page() {
 	chatpage_data.new_message_rect->render(window);
 
-	for (PHRectangle& msg_rect : chatpage_data.messages) {
+	for (PHRectangle& msg_rect : chatpage_data.messages)
 		msg_rect.render(window);
-	}
 }
 
 

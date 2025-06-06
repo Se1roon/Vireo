@@ -46,7 +46,6 @@ std::optional<User> DatabaseHandler::fetch_user(std::string username) {
 
 		auto chats = user_view["chats"].get_array().value;
 		for (auto&& chat : chats) {
-			std::cout << "Execute?\n";
 			auto oid = chat.get_oid().value;
 			auto chat_doc = (*client)["Vireo"]["Chats"].find_one(make_document(kvp("_id", oid)));
 			if (chat_doc) {
@@ -76,8 +75,6 @@ std::optional<User> DatabaseHandler::fetch_user(std::string username) {
 			}
 		}
 
-		std::cout << "Chats: " << user.getChats().size() << '\n';
-
 		return user;
 	}
 	
@@ -104,7 +101,7 @@ bool DatabaseHandler::insert_user(User& user) {
 	auto user_doc = user_to_document(user);
 
 	if (db_users.insert_one(user_doc.view())) {
-		std::cout << "Inserted [" << user.getUsername() << ":" << user.getPassword() << "] into the database.\n";
+		std::cout << "INFO: Inserted [" << user.getUsername() << ":" << user.getPassword() << "] into the database.\n";
 		return true;
 	}
 	return false;
@@ -134,7 +131,7 @@ bool DatabaseHandler::insert_message(std::string author, std::string content, st
 
 	auto result = chats_col.update_one(filter_doc.view(), update_doc.view());
 	if (!result) {
-		std::cout << "ERROR while inserting message!\n";
+		std::cout << "ERROR: An error occured while inserting message!\n";
 		return false;
 	}
 
@@ -160,7 +157,7 @@ bool DatabaseHandler::create_chat(std::string creator, std::string peer) {
 			kvp("messages", make_array()));
 
 	if (db_chats.insert_one(chat_doc.view())) {
-		std::cout << "Inserted [" << creator << " & " << peer << "] chat into the database.\n";
+		std::cout << "INFO: Inserted [" << creator << " & " << peer << "] chat into the database.\n";
 
 		auto db_users = (*client)["Vireo"]["Users"];
 

@@ -53,21 +53,22 @@ bool Server::handle_login_request(LoginData& ldata, sf::TcpSocket& client_s) {
 
 	if (user) {
 		if (user->getPassword() == ldata.password) {
-			std::cout << "Logged in!\n";
+			std::cout << "INFO: A user logged in!\n";
 
 			sf::Packet r_packet = packet_manager.create_login_response_packet(*user);
 			if (client_s.send(r_packet) == sf::Socket::Status::Done) {
 				return true;
 			} else {
-				std::cout << "Error while sending data to client\n";
+				std::cout << "ERROR: Unable to send data to client!\n";
 				return false;
 			}
 		} else {
-			std::cout << "Incorrect password!\n";
+			std::cout << "INFO: Incorrect password provided\n";
 		}
 	} 
 
-	std::cout << "User doesn't exist\n";
+	std::cout << "ERROR: User doesn't exist!\n";
+
 	return false;
 }
 
@@ -85,7 +86,7 @@ bool Server::handle_register_request(RegisterData& rdata, sf::TcpSocket& client_
 	if (client_s.send(r_packet) == sf::Socket::Status::Done)
 		return true;
 	
-	std::cout << "Error inserting user!\n";
+	std::cout << "ERROR: Unable to insert a user!\n";
 	return false;
 }
 
@@ -96,11 +97,11 @@ bool Server::handle_search_request(std::string search_term, sf::TcpSocket& clien
 	if (client_s.send(response_packet) == sf::Socket::Status::Done)
 		return true;
 
-	std::cout << "Error searching for users!\n";
+	std::cout << "ERROR: An error occured while searching for users!\n";
 	return false;
 }
 
-bool Server::handle_new_chat_request(std::string username, std::string peer, sf::TcpSocket& client_s, sf::TcpSocket& peer_s) {
+bool Server::handle_new_chat_request(std::string username, std::string peer, sf::TcpSocket& client_s, sf::TcpSocket* peer_s) {
 	sf::Packet response_packet;
 
 	if (db_handler->create_chat(username, peer)) {
@@ -109,28 +110,24 @@ bool Server::handle_new_chat_request(std::string username, std::string peer, sf:
 
 		Chat new_chat(username + " & " + peer, members, messages);
 
-		std::cout << "Inserted new chat [" << new_chat.getName() << "] into the database\n";
+		std::cout << "INFO: Inserted new chat [" << new_chat.getName() << "] into the database\n";
 
 		response_packet = packet_manager.create_new_chat_response_packet(new_chat);
 	}
 	else {
 		// Handle db chat insertion error
-		std::cout << "Unable to insert new chat!\n";
+		std::cout << "ERROR: Unable to insert new chat!\n";
 	}
-
-	// TODO: After sending data to both caller and peer it freezes
 
 	if (client_s.send(response_packet) != sf::Socket::Status::Done) return false;
-	if (peer_s.send(response_packet) != sf::Socket::Status::Done) {
-		std::cout << "Unable to send information to peer, might be offline\n";
-	}
-
-	std::cout << "Sent chat update info!\n";
+	if (peer_s)
+		if (peer_s->send(response_packet) != sf::Socket::Status::Done)
+			std::cout << "INFO: Unable to send information to peer, might be offline\n";
 
 	return true;
 }
 
-bool Server::handle_new_messsage_request(NewMessageData& nmdata, sf::TcpSocket& client_s, sf::TcpSocket& peer_s) {
+bool Server::handle_new_messsage_request(NewMessageData& nmdata, sf::TcpSocket& client_s, sf::TcpSocket* peer_s) {
 	sf::Packet response_packet;
 
 	Message msg(nmdata.msg_content, nmdata.msg_author);
@@ -140,8 +137,9 @@ bool Server::handle_new_messsage_request(NewMessageData& nmdata, sf::TcpSocket& 
 	}
 
 	if (client_s.send(response_packet) != sf::Socket::Status::Done) return false;
-	if (peer_s.send(response_packet) != sf::Socket::Status::Done)
-		std::cout << "Unable to send information to peer, might be offline\n";
+	if (peer_s != NULL)
+		if (peer_s->send(response_packet) != sf::Socket::Status::Done)
+			std::cout << "INFO: Unable to send information to peer, might be offline\n";
 
 	return true;
 }
@@ -151,7 +149,7 @@ void Server::handle_requests() {
 	if (selector.wait(sf::seconds(0.1f))) {
 		if (selector.isReady(listener)) {
 			handle_new_client();
-			std::cout << "New client added!\n";
+			std::cout << "INFO: New client added!\n";
 		}
 
 		for (auto c = clients.begin(); c != clients.end(); ) {
@@ -164,14 +162,14 @@ void Server::handle_requests() {
 					packet >> request_type;
 
 					if (request_type == "L") {
-						std::cout << "Login attempt\n";
+						std::cout << "LOG: Login attempt\n";
 
 						auto ldata = packet_manager.extract_login_packet(packet);
 						if (ldata) {
 							sf::Packet response_packet;
 							if (handle_login_request(*ldata, c->socket)){
 								c->username = ldata->username;
-								std::cout << "Sent User data to [" << c->username << "]\n";
+								std::cout << "LOG: Sent User data to [" << c->username << "]\n";
 							} else {
 								response_packet << "F";
 								c->socket.send(response_packet);
@@ -179,7 +177,7 @@ void Server::handle_requests() {
 						}
 					}
 					else if (request_type == "R") {
-						std::cout << "Register attempt\n";
+						std::cout << "LOG: Register attempt\n";
 
 						auto rdata = packet_manager.extract_register_packet(packet);
 						if (rdata) {
@@ -188,50 +186,49 @@ void Server::handle_requests() {
 						}
 					}
 					else if (request_type == "NM") {
-						std::cout << "New Message came";
+						std::cout << "LOG: New Message came\n";
 						
 						auto nmdata = packet_manager.extract_new_message_packet(packet);
 						if (nmdata) {
-							sf::TcpSocket* peer_socket;
+							sf::TcpSocket* peer_socket = NULL;
 							for (auto peer = clients.begin(); peer != clients.end(); peer++) {
 								if (peer->username == nmdata->peer_username) peer_socket = &peer->socket;
 							}
 
-							if (!handle_new_messsage_request(*nmdata, c->socket, *peer_socket)) {
-								std::cout << "?\n";
+							if (!handle_new_messsage_request(*nmdata, c->socket, peer_socket)) {
+								std::cout << "ERROR: handle_new_message_request error\n";
 							}
 						}
 					}
 					else if (request_type == "S") {
-						std::cout << "Search request\n";
+						std::cout << "LOG: Search request\n";
 
 						auto search_term = packet_manager.extract_search_packet(packet);
 						if (search_term) {
 							if (!handle_search_request(*search_term, c->socket)) {
-								std::cout << "error happened :(\n";
+								std::cout << "ERROR: error happened :(\n";
 							}
 						}
 					}
 					else if (request_type == "NH") {
-						std::cout << "New chat request!\n";
+						std::cout << "LOG: New chat request!\n";
 
 						auto peer_username = packet_manager.extract_new_chat_packet(packet);
 						if (peer_username) {
-							sf::TcpSocket* peer_socket;
+							sf::TcpSocket* peer_socket = NULL;
 							for (auto peer = clients.begin(); peer != clients.end(); peer++) {
 								if (peer->username == peer_username) peer_socket = &peer->socket;
 							}
 
-							if (!handle_new_chat_request(c->username, *peer_username, c->socket, *peer_socket)) {
-								std::cout << "dupa\n";
+							if (!handle_new_chat_request(c->username, *peer_username, c->socket, peer_socket)) {
+								std::cout << "ERROR: handle_new_chat_request errror\n";
 							}
-							std::cout << "Chat request handled!\n";
 						}
 					}
 					
 					++c;
 				} else if (status == sf::Socket::Status::Disconnected) {
-					std::cout << "Client has disconnected!\n";
+					std::cout << "LOG: Client has disconnected!\n";
 					selector.remove(c->socket);
 					c = clients.erase(c);
 				}

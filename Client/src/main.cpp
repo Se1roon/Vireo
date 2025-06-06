@@ -25,7 +25,7 @@ int main() {
 	auto [ptr, ec] = std::from_chars(v.data(), v.data() + v.size(), server_port);
 	
 	if (ec != std::errc()) {
-		std::cout << "Invalid config file!\n";
+		std::cout << "ERROR: Invalid config file!\n";
 		return 0;
 	}	
 
@@ -182,8 +182,7 @@ int main() {
 						RegisterPageData rpdata = gui_manager.get_registerpage_data();
 
 						if (rpdata.password != rpdata.password_conf) {
-							std::cout << "Passwords do not match!\n";
-							// Render some message
+							std::cout << "ERROR: Passwords do not match!\n"; // Should render something (it may not be the right spot to check that)
 						} else {
 							if (client.load_user(rpdata.username, rpdata.email, rpdata.password, rpdata.password_conf)) {
 								isLoginState = false;

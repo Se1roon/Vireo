@@ -122,8 +122,9 @@ Chat PacketManager::extract_new_chat_response_packet(sf::Packet& packet) {
 	std::string chat_name;
 	packet >> chat_name;
 
+	int dummy; // Quickfix for problems with reading int members_count because in the create .size() returns I belive 8 bytes.
 	int members_count;
-	packet >> members_count;
+	packet >> dummy >> members_count;
 
 	std::vector<std::string> members;
 	for (int i = 0; i < members_count; i++) {
@@ -172,7 +173,7 @@ sf::Packet PacketManager::create_new_message_packet(std::string author, std::str
 	sf::Packet packet;
 
 	packet << "NM" << chat.getName() << author << content;
-
+	
 	if (chat.getMembers()[0] == author)
 		packet << chat.getMembers()[1];
 	else

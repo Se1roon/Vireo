@@ -14,7 +14,7 @@ ConfigParser::ConfigParser(std::string config_file_path) : config_file(config_fi
 std::string ConfigParser::get_value(std::string key) {
 	std::ifstream file(config_file);
 	if (!file.is_open())
-		throw ConfigParserException("Unable to open config file. Does it exist?\n");
+		throw ConfigParserException("ERROR: Unable to open config file. Does it exist?\n");
 
 	std::string current_line;
 	while (!file.eof()) {
